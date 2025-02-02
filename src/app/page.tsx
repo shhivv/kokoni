@@ -1,99 +1,86 @@
 import Link from "next/link";
-
-import { LatestPost } from "~/app/_components/post";
-import RadialGraph from "~/components/RadialGraph";
 import { auth } from "~/server/auth";
-import { api, HydrateClient } from "~/trpc/server";
-export default async function Home() {
-  const hello = await api.post.hello({ text: "from tRPC" });
-  const session = await auth();
-  const data = {
-  americanRevolution: {
-  causes: {
-    taxation: {
-      stampAct: {},
-      teaAct: {},
-      townshendActs: {}
-    },
-    representation: {
-      noTaxationWithoutRepresentation: {},
-      continentalCongress: {}
-    },
-    resistance: {
-      bostonTeaParty: {},
-      sonsOfLiberty: {}
-    }
-  },
-  events: {
-    battles: {
-      lexingtonAndConcord: {},
-      bunkerHill: {},
-      saratoga: {},
-      yorktown: {}
-    },
-    declarations: {
-      declarationOfIndependence: {
-        authors: {
-          thomasJefferson: {},
-          johnAdams: {},
-          benjaminFranklin: {}
-        }
-      },
-      oliveBranchPetition: {}
-    }
-  },
-  people: {
-    patriots: {
-      georgeWashington: {},
-      paulRevere: {},
-      alexanderHamilton: {}
-    },
-    loyalists: {
-      thomasHutchinson: {},
-      josephGalloway: {}
-    }
-  },
-  outcomes: {
-    treatyOfParis: {
-      terms: {
-        independenceRecognized: {},
-        britishTroopsWithdrawn: {}
-      }
-    },
-    newGovernment: {
-      articlesOfConfederation: {},
-      usConstitution: {}
-    }
-  }
-}};
+import { HydrateClient } from "~/trpc/server";
 
-  if (session?.user) {
-    void api.post.getLatest.prefetch();
-  }
+export default async function Home() {
+  const session = await auth();
 
   return (
     <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-black text-white">
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-        <RadialGraph data={data}/> 
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-2xl text-white">
-              {hello ? hello.greeting : "Loading tRPC query..."}
-            </p>
+      <main className="flex min-h-screen flex-col items-center justify-center bg-gray-100 text-black p-4">
+        <header className="mb-10 text-center">
+          <h1 className="text-5xl font-bold text-gray-900 tracking-tight">Rover</h1>
+          <p className="text-gray-600 text-lg">Explore with precision</p>
+        </header>
 
-            <div className="flex flex-col items-center justify-center gap-4">
-              <p className="text-center text-2xl text-white">
-                {session && <span>Logged in as {session.user?.name}</span>}
-              </p>
-              <Link
-                href={session ? "/api/auth/signout" : "/api/auth/signin"}
-                className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
+        <section className="w-1/2">
+          <div className="bg-white shadow-lg rounded-2xl p-6 space-y-4">
+            <form className="flex flex-col space-y-4">
+              <input
+                id="search-box"
+                type="text"
+                placeholder="Search..."
+                className="border border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              />
+              <button
+                type="submit"
+                className="bg-blue-600 text-white rounded-xl py-3 font-medium hover:bg-blue-700 transition w-full"
               >
-                {session ? "Sign out" : "Sign in"}
-              </Link>
+                Search
+              </button>
+            </form>
+
+            <div className="flex justify-between">
+              <form className="space-x-2">
+                <input type="hidden" name="search" id="search-input" />
+                <button
+                  type="submit"
+                  formAction="#"
+                  // onFocus={(e) => {
+                  //   document.getElementById("search-box").value = e.target.innerText;
+                  // }}
+                  className="bg-gray-200 text-gray-800 rounded-xl px-4 py-2 hover:bg-gray-300 transition"
+                >
+                  Machine Learning
+                </button>
+                <button
+                  type="submit"
+                  formAction="#"
+                  // onFocus={(e) => {
+                  //   document.getElementById("search-box").value = e.target.innerText;
+                  // }}
+                  className="bg-gray-200 text-gray-800 rounded-xl px-4 py-2 hover:bg-gray-300 transition"
+                >
+                  Web Development
+                </button>
+                <button
+                  type="submit"
+                  formAction="#"
+                  // onFocus={(e) => {
+                  //   document.getElementById("search-box").value = e.target.innerText;
+                  // }}
+                  className="bg-gray-200 text-gray-800 rounded-xl px-4 py-2 hover:bg-gray-300 transition"
+                >
+                  Blockchain
+                </button>
+              </form>
             </div>
           </div>
-        </div>
+        </section>
+
+        <footer className="mt-10 text-center">
+          <div className="flex flex-col items-center space-y-3">
+            {session && (
+              <p className="text-sm text-gray-600">Logged in as {session.user?.name}</p>
+            )}
+            <Link
+              href={session ? "/api/auth/signout" : "/api/auth/signin"}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              {session ? "Sign out" : "Sign in"}
+            </Link>
+          </div>
+        </footer>
       </main>
     </HydrateClient>
   );
