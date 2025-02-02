@@ -15,7 +15,7 @@ export default async function Home() {
 
         <section className="w-1/2">
           <div className="bg-white shadow-lg rounded-2xl p-6 space-y-4">
-            <form className="flex flex-col space-y-4">
+            <form className="flex flex-col space-y-4" action="/">
               <input
                 id="search-box"
                 type="text"
