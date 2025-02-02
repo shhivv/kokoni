@@ -57,4 +57,4 @@ docker run -d \
   -e POSTGRES_PASSWORD="$DB_PASSWORD" \
   -e POSTGRES_DB=research-app \
   -p "$DB_PORT":5432 \
-  docker.io/postgres && echo "Database container '$DB_CONTAINER_NAME' was successfully created"
+  docker.io/postgres && echo "Database container '$DB_CONTAINER_NAME' & '$DB_PASSWORD' was successfully created"
