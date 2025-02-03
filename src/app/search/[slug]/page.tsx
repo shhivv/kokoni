@@ -1,4 +1,6 @@
+'use client'
 import RadialGraph from "~/components/RadialGraph"
+
 
 export default async function Page({
   params,
@@ -60,13 +62,25 @@ export default async function Page({
       },
       newGovernment: {
         articlesOfConfederation: {},
-        usConstitution: {}
+        usConstitution: {
+          a: {},
+          b: {
+            c: {}
+          }
+        }
       }
     }
   }
 };
 
   const slug = (await params).slug
-  return <RadialGraph data={data}/>
+  return <RadialGraph 
+  data={data}
+  onToggleUpdate={(toggledNodes, nodeHierarchy) => {
+    // Handle updates if needed
+    console.log('Selected nodes:', toggledNodes);
+    console.log('Node hierarchy:', nodeHierarchy);
+  }}
+/>
   
 }
