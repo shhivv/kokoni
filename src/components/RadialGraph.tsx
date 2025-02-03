@@ -1,5 +1,4 @@
 'use client'
-// components/RadialGraph.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
@@ -15,14 +14,11 @@ interface Node {
   index: number;
   x: number;
   y: number;
-  baseX: number;  // Base position for animation
-  baseY: number;
-  children?: Node[];
 }
 
 interface Link {
-  source: { x: number; y: number };
-  target: { x: number; y: number };
+  source: Node;
+  target: Node;
 }
 
 interface RadialGraphProps {
@@ -34,8 +30,8 @@ interface RadialGraphProps {
 
 const RadialGraph: React.FC<RadialGraphProps> = ({
   data,
-  width = 600,
-  height = 400,
+  width = 1200,
+  height = 800,
   onToggleUpdate
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -49,69 +45,65 @@ const RadialGraph: React.FC<RadialGraphProps> = ({
     const centerX = width / 2;
     const centerY = height / 2;
     
-    // Add root node
-    nodes.push({
+    const rootNode: Node = {
       id: rootKey,
       isRoot: true,
       isToggled: false,
       depth: 0,
       index: 0,
       x: centerX,
-      y: centerY,
-      baseX: centerX,
-      baseY: centerY
-    });
+      y: centerY
+    };
+    nodes.push(rootNode);
 
     const childKeys = Object.keys(inputData[rootKey]);
-    const radius = Math.min(width, height) / 4;
+    const radius = Math.min(width, height) / 3;
     
     childKeys.forEach((key, index) => {
       const angle = (index / childKeys.length) * 2 * Math.PI;
       const x = centerX + radius * Math.cos(angle);
       const y = centerY + radius * Math.sin(angle);
       
-      nodes.push({
+      const childNode: Node = {
         id: key,
         isRoot: false,
         isToggled: toggledNodes[key] || false,
         depth: 1,
         index,
         x,
-        y,
-        baseX: x,
-        baseY: y
-      });
+        y
+      };
+      nodes.push(childNode);
       
       links.push({
-        source: { x: centerX, y: centerY },
-        target: { x, y }
+        source: rootNode,
+        target: childNode
       });
       
       if (typeof inputData[rootKey][key] === 'object') {
         const grandchildKeys = Object.keys(inputData[rootKey][key]);
-        const outerRadius = radius * 1.8;
+        const outerRadius = radius * 1.6; // Reduced from 1.8
         
         grandchildKeys.forEach((grandchildKey, grandchildIndex) => {
-          const sectionalAngle = angle - (Math.PI / 8) + 
-            ((grandchildIndex + 1) / (grandchildKeys.length + 1)) * (Math.PI / 4);
+          const sectionalAngle = angle - (Math.PI / 6) + 
+            ((grandchildIndex + 1) / (grandchildKeys.length + 1)) * (Math.PI / 3);
           const gx = centerX + outerRadius * Math.cos(sectionalAngle);
           const gy = centerY + outerRadius * Math.sin(sectionalAngle);
           
-          nodes.push({
+          const grandchildNode: Node = {
             id: grandchildKey,
             isRoot: false,
             isToggled: toggledNodes[grandchildKey] || false,
             depth: 2,
             index: grandchildIndex,
             x: gx,
-            y: gy,
-            baseX: gx,
-            baseY: gy
-          });
+            y: gy
+          };
+          nodes.push(grandchildNode);
           
           links.push({
-            source: { x, y },
-            target: { x: gx, y: gy }
+            source: childNode,
+            target: grandchildNode
           });
         });
       }
@@ -131,64 +123,40 @@ const RadialGraph: React.FC<RadialGraphProps> = ({
       .attr("viewBox", [0, 0, width, height])
       .attr("class", "w-full h-full");
 
-    // Add subtle continuous animation
-    function animateNodes() {
-      const t = Date.now() / 3000; // Slow cycle
-      nodes.forEach(node => {
-        if (!node.isRoot) {
-          // Very small movement around base position
-          const offsetX = Math.sin(t + node.index) * 3;
-          const offsetY = Math.cos(t + node.index) * 3;
-          node.x = node.baseX + offsetX;
-          node.y = node.baseY + offsetY;
-        }
-      });
-
-      // Update positions
-      nodeGroups.attr("transform", d => `translate(${d.x},${d.y})`);
-      linkElements
-        .attr("x1", d => d.source.x)
-        .attr("y1", d => d.source.y)
-        .attr("x2", d => d.target.x)
-        .attr("y2", d => d.target.y);
-
-      requestAnimationFrame(animateNodes);
-    }
+    // Create force simulation with reduced strength
+    const simulation = d3.forceSimulation(nodes)
+      .force("link", d3.forceLink(links)
+        .id((d: any) => d.id)
+        .distance(d => (d as any).source.depth === 0 ? 100 : 80)) // Reduced distances
+      .force("charge", d3.forceManyBody().strength(-600)) // Reduced strength
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("collision", d3.forceCollide().radius(50)) // Increased for larger nodes
+      .alphaDecay(0.1); // Faster settling
 
     // Add links
     const linkElements = svg.append("g")
       .selectAll("line")
       .data(links)
       .join("line")
-      .attr("class", "stroke-gray-200 stroke-2");
+      .attr("class", "stroke-gray-200 stroke-[0.5px]");
 
     // Add nodes
     const nodeGroups = svg.append("g")
       .selectAll("g")
       .data(nodes)
-      .join("g")
-      .attr("transform", d => `translate(${d.x},${d.y})`);
+      .join("g");
 
-    // Add circles for nodes
-    const circleRadius = 25; // Increased size for text
+    // Create circles with larger radius
+    const circleRadius = 40; // Increased from 35
     nodeGroups.append("circle")
       .attr("r", circleRadius)
       .attr("class", d => 
         d.isRoot 
-          ? "fill-white stroke-2 stroke-red-500 cursor-default" 
-          : `fill-white stroke-2 stroke-blue-500 cursor-pointer hover:stroke-blue-600 
-             transition-all duration-200 ${d.isToggled ? "stroke-green-500" : ""}`)
+          ? "fill-white stroke-[0.75px] stroke-gray-400 cursor-default"
+          : `fill-white stroke-[0.75px] stroke-gray-400 cursor-pointer 
+             transition-colors duration-200 ${d.isToggled ? "stroke-green-500" : ""}`)
       .on("click", (event, d) => {
         if (!d.isRoot) {
-          // Scale animation on click
-          d3.select(event.currentTarget)
-            .transition()
-            .duration(200)
-            .attr("r", circleRadius * 1.1)
-            .transition()
-            .duration(200)
-            .attr("r", circleRadius);
-
           const newToggledNodes = {
             ...toggledNodes,
             [d.id]: !toggledNodes[d.id]
@@ -203,22 +171,46 @@ const RadialGraph: React.FC<RadialGraphProps> = ({
       .text(d => d.id)
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
-      .attr("class", "text-sm font-medium fill-gray-700 select-none");
+      .attr("class", "text-xs font-medium fill-gray-700 select-none");
 
-    // Start animation
-    animateNodes();
+    // Update positions on simulation tick
+    simulation.on("tick", () => {
+      linkElements
+        .attr("x1", d => (d as any).source.x)
+        .attr("y1", d => (d as any).source.y)
+        .attr("x2", d => (d as any).target.x)
+        .attr("y2", d => (d as any).target.y);
 
-    // Cleanup
+      nodeGroups
+        .attr("transform", d => `translate(${d.x},${d.y})`);
+    });
+
+    // Add drag behavior with reduced movement
+    nodeGroups.call(d3.drag()
+      .on("start", (event) => {
+        if (!event.active) simulation.alphaTarget(0.1).restart(); // Reduced target
+        event.subject.fx = event.subject.x;
+        event.subject.fy = event.subject.y;
+      })
+      .on("drag", (event) => {
+        event.subject.fx = event.x;
+        event.subject.fy = event.y;
+      })
+      .on("end", (event) => {
+        if (!event.active) simulation.alphaTarget(0);
+        event.subject.fx = null;
+        event.subject.fy = null;
+      }));
+
     return () => {
-      // The animation will stop when the component unmounts
-      // because the requestAnimationFrame loop will end
+      simulation.stop();
     };
   }, [data, width, height, toggledNodes]);
 
   return (
     <svg
       ref={svgRef}
-      className="w-full aspect-video text-sm"
+      className="w-full aspect-video"
     />
   );
 };
