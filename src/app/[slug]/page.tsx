@@ -1,7 +1,6 @@
 import { auth } from "~/server/auth"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"
-import Flow from "~/components/Flow" 
- 
+import { Flow } from "~/components/flow" 
 
 export default async function Page({
   params,
@@ -42,7 +41,7 @@ export default async function Page({
             </div>
           </TabsContent>
           <TabsContent value="knowledge-map">
-            <div className="w-full h-full border border-red-500 w-screen h-screen">
+            <div className="border border-red-500 w-screen h-screen">
               <Flow/>
             </div>
           </TabsContent>

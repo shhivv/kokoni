@@ -7,13 +7,14 @@ import {
   useNodesState,
   useEdgesState,
   MarkerType,
+  type Connection,
 } from '@xyflow/react';
  
 import '@xyflow/react/dist/style.css';
  
  
-import FloatingEdge from '~/components/FloatingEdge';
-import FloatingConnectionLine from '~/components/FloatingConnectionLine';
+import FloatingEdge from '~/components/floating-edge';
+import FloatingConnectionLine from '~/components/floating-connection-line';
 import { initialElements } from '~/lib/initialElements';
  
 interface PlantData {
@@ -21,24 +22,24 @@ interface PlantData {
 }
 
 const data: PlantData = {
-  "plants": [
-    { "flowers": ["petals", "bud"] },
+  plants: [
+    { flowers: ["petals", "bud"] },
     "stem",
     "root"
   ]
 };
 
-const { nodes: initialNodes, edges: initialEdges } = initialElements(data);
+const { nodes: initialNodes, edges: initialEdges } = initialElements(data as unknown as Record<string, unknown>);
  
 const edgeTypes = {
   floating: FloatingEdge,
 };
  
-const NodeAsHandleFlow = () => {
+export const Flow: React.FC = () => {
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const onConnect = useCallback(
-    (params) =>
+    (params: Connection) =>
       setEdges((eds) =>
         addEdge(
           {
@@ -46,10 +47,10 @@ const NodeAsHandleFlow = () => {
             type: 'floating',
             markerEnd: { type: MarkerType.Arrow },
           },
-          eds,
-        ),
+          eds
+        )
       ),
-    [setEdges],
+    [setEdges]
   );
  
   return (
@@ -71,4 +72,3 @@ const NodeAsHandleFlow = () => {
   );
 };
  
-export default NodeAsHandleFlow;
