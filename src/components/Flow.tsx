@@ -16,7 +16,19 @@ import FloatingEdge from '~/components/FloatingEdge';
 import FloatingConnectionLine from '~/components/FloatingConnectionLine';
 import { initialElements } from '~/lib/initialElements';
  
-const { nodes: initialNodes, edges: initialEdges } = initialElements();
+interface PlantData {
+  plants: (string | { flowers: string[] })[];
+}
+
+const data: PlantData = {
+  "plants": [
+    { "flowers": ["petals", "bud"] },
+    "stem",
+    "root"
+  ]
+};
+
+const { nodes: initialNodes, edges: initialEdges } = initialElements(data);
  
 const edgeTypes = {
   floating: FloatingEdge,
