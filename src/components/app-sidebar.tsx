@@ -40,7 +40,7 @@ const items = [
   },
   {
     title: "Settings",
-    url: "#",
+    url: "/ok",
     icon: Search,
   },
 ]
