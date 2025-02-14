@@ -4,6 +4,8 @@ import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 
 import { TRPCReactProvider } from "~/trpc/react";
+import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
+import { AppSidebar } from "~/components/app-sidebar";
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -15,9 +17,16 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable}`}>
+    <html lang="en" className={`${GeistSans.variable} dark antialiased`}>
       <body>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <TRPCReactProvider>
+          <SidebarProvider defaultOpen>
+            <AppSidebar />
+              <SidebarTrigger className="p-4 m-2"/>
+              {children}
+          </SidebarProvider>
+
+        </TRPCReactProvider>
       </body>
     </html>
   );
