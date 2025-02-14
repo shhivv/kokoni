@@ -1,5 +1,5 @@
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "~/components/ui/dropdown-menu"
-import { User2, ChevronUp, Plus, Search } from "lucide-react"
+import { User2, ChevronUp, Plus, Search, Home } from "lucide-react"
 import Link from "next/link";
 import {
   Sidebar,
@@ -20,8 +20,8 @@ import { auth } from "~/server/auth";
 const items = [
   {
     title: "Home",
-    url: "#",
-    icon: Search,
+    url: "/",
+    icon: Home,
   },
   {
     title: "Inbox",
