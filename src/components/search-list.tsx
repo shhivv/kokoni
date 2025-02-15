@@ -2,7 +2,7 @@
 
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "~/components/ui/context-menu"
 import { Search } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -16,6 +16,8 @@ import { useToast } from "~/hooks/use-toast"
 
 export function SearchList() {
   const router = useRouter()
+  const pathname = usePathname()
+  const currentId = pathname.split("/")[1] // Get the ID from the URL
   const { toast } = useToast()
 
   // Query to get all searches
@@ -57,6 +59,7 @@ export function SearchList() {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
+                    isActive={search.id === currentId}
                     onClick={() => router.push(`/${search.id}`)}
                   >
                     <button>

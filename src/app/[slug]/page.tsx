@@ -7,7 +7,7 @@ export default async function Page({
 }: {
   params: { slug: string }
 }) {
-  // const { slug } = params
+  const { slug } = await params
   const session = await auth()
  
 
@@ -20,7 +20,7 @@ export default async function Page({
             </TabsList>
           <TabsContent value="response">
             <div className="prose prose-invert max-w-none">
-              <h1>Response Analysis</h1>
+              <h1>{slug}</h1>
               <p>This is a detailed analysis of the response provided by the system. The content here will help users understand the context and implications of the data.</p>
               <h2>Key Findings</h2>
               <ul>
