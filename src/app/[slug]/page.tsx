@@ -7,7 +7,7 @@ export default async function Page({
 }: {
   params: { slug: string }
 }) {
-  const { slug } = params
+  // const { slug } = params
   const session = await auth()
  
 

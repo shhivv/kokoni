@@ -1,6 +1,7 @@
 import { reportRouter } from "~/server/api/routers/report";
 import { keywordRouter } from "~/server/api/routers/keyword";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
+import { searchRouter } from "~/server/api/routers/search";
 
 /**
  * This is the primary router for your server.
@@ -9,7 +10,8 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
   report: reportRouter,
-  keyword: keywordRouter
+  keyword: keywordRouter,
+  search: searchRouter
 });
 
 // export type definition of API

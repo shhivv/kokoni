@@ -6,10 +6,22 @@ import {
 } from "~/server/api/trpc";
 
 export const reportRouter = createTRPCRouter({
+  produceReport: protectedProcedure
+    // Accept any JSON object using passthrough so that extra fields are allowed.
+    .input(z.object({}).passthrough())
+    .mutation(async ({ ctx, input }): Promise<{ markdown: string }> => {
+      // Hardcoded markdown text
+      const markdownText = `
+# Hardcoded Report
 
-  create: protectedProcedure
-    .input(z.object({ hierarchy: z.string().min(1) }))
-    .mutation(async ({ ctx, input }): Promise<void> => {
-      // Currently empty implementation
+This report is generated based on the provided input.
+
+- Analysis point one
+- Analysis point two
+
+Thank you for using our service!
+      `;
+      
+      return { markdown: markdownText };
     }),
 });
