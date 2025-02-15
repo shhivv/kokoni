@@ -1,5 +1,5 @@
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "~/components/ui/dropdown-menu"
-import { User2, ChevronUp } from "lucide-react"
+import { User2, ChevronUp, Plus } from "lucide-react"
 import Link from "next/link"
 import {
   Sidebar,
@@ -20,9 +20,14 @@ export async function AppSidebar() {
     <Sidebar>
       <SidebarHeader/>
       <SidebarContent>
-        <SearchList />
+        {session ? <SearchList/> : null }
       </SidebarContent>
       <SidebarFooter>
+        <SidebarMenuButton>
+          <Link href="/" className="w-full flex space-x-2 items-center">
+            <Plus/><div>New Chat</div>
+          </Link>
+        </SidebarMenuButton>
         <SidebarMenu>
           <SidebarMenuItem>
             {session ? (
