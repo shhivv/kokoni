@@ -88,7 +88,7 @@ export const Flow: React.FC = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const onConnect = useCallback(
-    (params: Connection) =>
+    (params: Connection) =>{
       setEdges((eds) =>
         addEdge(
           {
@@ -97,7 +97,7 @@ export const Flow: React.FC = () => {
           },
           eds
         )
-      ),
+      )} ,
     [setEdges]
   );
  
@@ -108,6 +108,7 @@ export const Flow: React.FC = () => {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        proOptions={{ hideAttribution: true }}
         onConnect={onConnect}
         fitView
         edgeTypes={edgeTypes}
@@ -124,10 +125,6 @@ export const Flow: React.FC = () => {
           gap={16}
           size={1}
           className="bg-neutral-900"
-        />
-        <Controls 
-          className="bg-neutral-800 border border-neutral-700 rounded-lg fill-neutral-200 hover:bg-neutral-700"
-          showInteractive={false}
         />
       </ReactFlow>
     </div>
