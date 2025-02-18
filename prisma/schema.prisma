@@ -25,7 +25,7 @@ model KnowledgeMap {
 
 model Report {
   id       Int  @id @default(autoincrement())
-  contents Json
+  contents String
   updatedAt DateTime @updatedAt
 
   search   Search @relation(fields: [searchId], references: [id], onDelete: Cascade)

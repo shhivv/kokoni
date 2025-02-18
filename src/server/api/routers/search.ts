@@ -33,7 +33,12 @@ export const searchRouter = createTRPCRouter({
         },
         include: {
           KnowledgeMap: true,
-          Report: true,
+          Report: {
+            select: {
+              contents: true,
+              updatedAt: true,
+            },
+          },
         },
       });
 
@@ -63,7 +68,7 @@ export const searchRouter = createTRPCRouter({
           },
           Report: {
             create: {
-              contents: {},
+              contents: "### Dummy Markdown\n\nThis is a placeholder for actual report content."
             },
           },
         },

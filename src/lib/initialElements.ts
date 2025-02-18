@@ -116,87 +116,233 @@ export interface FlowEdge {
   };
 }
 
+interface NodePosition {
+  x: number;
+  y: number;
+}
+
+// Keep track of the width needed for each subtree
+const subtreeWidths = new Map<string, number>();
+
+// Add at the top with other Maps
+const nodePositions = new Map<string, NodePosition>();
+
+// First pass to calculate subtree widths
+function calculateSubtreeWidth(
+  data: unknown,
+  nodeId: string,
+  level: number
+): number {
+  if (data === null || typeof data !== 'object') {
+    return 1;
+  }
+
+  if (Array.isArray(data)) {
+    const width = data.length || 1;
+    subtreeWidths.set(nodeId, width);
+    return width;
+  }
+
+  const entries = Object.entries(data);
+  let totalWidth = 0;
+  
+  entries.forEach(([_, value], index) => {
+    const childId = `node-${level + 1}-${index}`;
+    if (value && typeof value === 'object') {
+      totalWidth += calculateSubtreeWidth(value, childId, level + 1);
+    } else {
+      totalWidth += 1;
+    }
+  });
+
+  const width = Math.max(entries.length, totalWidth);
+  subtreeWidths.set(nodeId, width);
+  return width;
+}
+
+function calculateNodePosition(
+  index: number, 
+  level: number, 
+  totalNodesInLevel: number, 
+  options: LayoutOptions,
+  nodeId: string,
+  parentId: string | null
+): NodePosition {
+  const {
+    centerX,
+    centerY,
+    levelRadius,
+    levelSpacing,
+  } = options;
+
+  const nodeSpacing = 150; // Base spacing between nodes
+  const levelHeight = 100; // Height between levels
+
+  if (level === 0) {
+    // Root node
+    return {
+      x: centerX,
+      y: centerY
+    };
+  }
+
+  const parentWidth = parentId ? (subtreeWidths.get(parentId) || 1) : 1;
+  const currentWidth = subtreeWidths.get(nodeId) || 1;
+  
+  // Calculate x position based on parent's position and subtree widths
+  const parentX = parentId ? 
+    (nodePositions.get(parentId)?.x ?? centerX) : 
+    centerX;
+  
+  const offset = (nodeSpacing * (index - (totalNodesInLevel - 1) / 2));
+  const x = parentX + offset;
+
+  // Y position is simply based on level
+  const y = centerY + (level * levelHeight);
+
+  const position = { x, y };
+  nodePositions.set(nodeId, position);
+  return position;
+}
+
+interface LayoutOptions {
+  centerX: number;
+  centerY: number;
+  levelRadius: number;
+  levelSpacing: number;
+}
+
+function processJsonLevel(
+  data: unknown,
+  parentId: string | null,
+  level: number,
+  levelNodes: Map<number, number>,
+  options: LayoutOptions
+): { nodes: FlowNode[]; edges: FlowEdge[] } {
+  const nodes: FlowNode[] = [];
+  const edges: FlowEdge[] = [];
+
+  if (data === null || typeof data !== 'object') {
+    return { nodes, edges };
+  }
+
+  // Initialize level counter if not exists
+  if (!levelNodes.has(level)) {
+    levelNodes.set(level, 0);
+  }
+
+  if (Array.isArray(data)) {
+    // For arrays, create nodes for each item
+    data.forEach((item, index) => {
+      const currentIndex = levelNodes.get(level)!;
+      const nodeId = `node-${level}-${currentIndex}`;
+      
+      const position = calculateNodePosition(
+        currentIndex,
+        level,
+        data.length,
+        options,
+        nodeId,
+        parentId
+      );
+
+      nodes.push({
+        id: nodeId,
+        data: { label: String(item) },
+        position,
+      });
+
+      // Only connect to the direct parent
+      if (parentId) {
+        edges.push({
+          id: `edge-${parentId}-${nodeId}`,
+          source: parentId,
+          target: nodeId,
+          type: 'floating',
+          markerEnd: { type: MarkerType.Arrow },
+        });
+      }
+
+      levelNodes.set(level, currentIndex + 1);
+    });
+  } else {
+    // Handle objects
+    const entries = Object.entries(data);
+    
+    entries.forEach(([key, value], index) => {
+      const currentIndex = levelNodes.get(level)!;
+      const nodeId = `node-${level}-${currentIndex}`;
+      
+      const position = calculateNodePosition(
+        index,
+        level,
+        entries.length,
+        options,
+        nodeId,
+        parentId
+      );
+
+      nodes.push({
+        id: nodeId,
+        data: { label: key },
+        position,
+      });
+
+      // Connect to parent if exists
+      if (parentId) {
+        edges.push({
+          id: `edge-${parentId}-${nodeId}`,
+          source: parentId,
+          target: nodeId,
+          type: 'floating',
+          markerEnd: { type: MarkerType.Arrow },
+        });
+      }
+
+      // Process children if any
+      if (value && typeof value === 'object') {
+        const { nodes: childNodes, edges: childEdges } = processJsonLevel(
+          value,
+          nodeId,
+          level + 1,
+          levelNodes,
+          options
+        );
+        nodes.push(...childNodes);
+        edges.push(...childEdges);
+      }
+
+      levelNodes.set(level, currentIndex + 1);
+    });
+  }
+
+  return { nodes, edges };
+}
+
 export function initialElements(
   data: Record<string, unknown>,
   options: {
     centerX?: number;
     centerY?: number;
-    radius?: number;
-    nodePrefix?: string;
+    levelRadius?: number;
+    levelSpacing?: number;
   } = {}
 ): { nodes: FlowNode[]; edges: FlowEdge[] } {
-  const nodes: FlowNode[] = [];
-  const edges: FlowEdge[] = [];
-  const {
-    centerX = window.innerWidth / 2,
-    centerY = window.innerHeight / 2,
-    radius = 250,
-    nodePrefix = 'node',
-  } = options;
+  subtreeWidths.clear();
+  nodePositions.clear(); // Clear positions for new calculation
+  
+  // First pass to calculate subtree widths
+  calculateSubtreeWidth(data, 'node-0-0', 0);
 
-  let nodeCounter = 0;
+  const layoutOptions: LayoutOptions = {
+    centerX: options.centerX ?? window.innerWidth / 2,
+    centerY: options.centerY ?? 100,
+    levelRadius: options.levelRadius ?? 150,
+    levelSpacing: options.levelSpacing ?? 100,
+  };
 
-  // Helper function to process the JSON structure
-  function processJSON(obj: unknown, parentId: string | null = null): void {
-    const entries: [string, unknown][] = Array.isArray(obj)
-      ? obj.map((item, index) => [String(index), item])
-      : Object.entries(obj as Record<string, unknown>);
-
-    entries.forEach(([key, value]) => {
-      if (Array.isArray(value) && value.length === 0) {
-        return;
-      }
-
-      const currentId = `${nodePrefix}-${nodeCounter++}`;
-
-      // Provide a default position here
-      nodes.push({
-        id: currentId,
-        data: { label: Array.isArray(obj) ? String(key) : key },
-        position: { x: 0, y: 0 },
-      });
-
-      // Add edge from current node to its parent, if applicable
-      if (parentId !== null) {
-        edges.push({
-          id: `edge-${parentId}-${currentId}`,
-          source: currentId,
-          target: parentId,
-          type: 'floating',
-          markerEnd: {
-            type: MarkerType.Arrow,
-          },
-        });
-      }
-
-      // Recursively process children if value is a non-null object (but not an array)
-      if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-        processJSON(value, currentId);
-      }
-    });
-  }
-
-  // Create root node
-  const rootKey = Object.keys(data)[0];
-  const rootId = 'target';
-  nodes.push({
-    id: rootId,
-    data: { label: rootKey! },
-    position: { x: centerX, y: centerY },
-  });
-
-  // Process the rest of the structure
-  processJSON(data[rootKey!], rootId);
-
-  // Position remaining nodes in a circle around the root node
-  const nonRootNodes = nodes.filter((node) => node.id !== rootId);
-  nonRootNodes.forEach((node, index) => {
-    const degrees = index * (360 / nonRootNodes.length);
-    const radians = (degrees * Math.PI) / 180;
-    const x = radius * Math.cos(radians) + centerX;
-    const y = radius * Math.sin(radians) + centerY;
-    node.position = { x, y };
-  });
-
-  return { nodes, edges };
+  const levelNodes = new Map<number, number>();
+  levelNodes.set(0, 0);
+  
+  return processJsonLevel(data, null, 0, levelNodes, layoutOptions);
 }

@@ -1,51 +1,38 @@
 import { auth } from "~/server/auth"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"
-import { Flow } from "~/components/flow" 
+import { Flow } from "~/components/flow"
+import { Report } from "~/components/report"
+import { redirect } from "next/navigation"
 
 export default async function Page({
   params,
 }: {
   params: { slug: string }
 }) {
-  const { slug } = await params
   const session = await auth()
- 
+  
+  if (!session) {
+    redirect("/api/auth/signin")
+  }
 
   return (
-    <main>
-        <Tabs defaultValue="response" className="relative">
-            <TabsList>
-              <TabsTrigger value="knowledge-map">Knowledge Map</TabsTrigger>
-              <TabsTrigger value="response">Report</TabsTrigger>
-            </TabsList>
-          <TabsContent value="response">
-            <div className="prose prose-invert max-w-none">
-              <h1>{slug}</h1>
-              <p>This is a detailed analysis of the response provided by the system. The content here will help users understand the context and implications of the data.</p>
-              <h2>Key Findings</h2>
-              <ul>
-                <li>Important point one about the response</li>
-                <li>Critical observation about the data</li>
-                <li>Relevant patterns identified</li>
-              </ul>
-              <h2>Recommendations</h2>
-              <p>Based on the analysis above, here are some recommended actions:</p>
-              <ol>
-                <li>First recommended action with explanation</li>
-                <li>Second recommended action with context</li>
-                <li>Third recommended action with implementation details</li>
-              </ol>
-              <blockquote>
-                <p>Important insights and key takeaways from the analysis should be highlighted here for quick reference.</p>
-              </blockquote>
-            </div>
-          </TabsContent>
-          <TabsContent value="knowledge-map">
-            <div className="border border-red-500 w-screen h-screen">
-              <Flow/>
-            </div>
-          </TabsContent>
-        </Tabs>
+    <main className="h-[calc(100vh-4rem)] w-full bg-neutral-900">
+      <Tabs defaultValue="response" className="h-full flex flex-col">
+        <div className="px-4">
+          <TabsList className="h-12">
+            <TabsTrigger value="knowledge-map">Knowledge Map</TabsTrigger>
+            <TabsTrigger value="response">Report</TabsTrigger>
+          </TabsList>
+        </div>
+        
+        <TabsContent value="response" className="flex-1 overflow-hidden">
+          <Report searchId={params.slug} />
+        </TabsContent>
+        
+        <TabsContent value="knowledge-map" className="flex-1 overflow-hidden">
+          <Flow />
+        </TabsContent>
+      </Tabs>
     </main>
   )
 }
