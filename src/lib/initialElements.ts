@@ -175,8 +175,8 @@ function calculateNodePosition(
     levelSpacing,
   } = options;
 
-  const nodeSpacing = 150; // Base spacing between nodes
-  const levelHeight = 100; // Height between levels
+  const nodeSpacing = 200; // Increased from 150 to add more horizontal space
+  const levelHeight = 120; // Increased from 100 to add more vertical space
 
   if (level === 0) {
     // Root node
