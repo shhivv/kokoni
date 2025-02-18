@@ -175,11 +175,11 @@ function calculateNodePosition(
     levelSpacing,
   } = options;
 
-  const nodeSpacing = 200; // Increased from 150 to add more horizontal space
-  const levelHeight = 120; // Increased from 100 to add more vertical space
+  const nodeSpacing = 200;
+  const levelHeight = 120;
+  const progressiveYOffset = 30; // Offset for each subsequent node at same level
 
   if (level === 0) {
-    // Root node
     return {
       x: centerX,
       y: centerY
@@ -189,7 +189,6 @@ function calculateNodePosition(
   const parentWidth = parentId ? (subtreeWidths.get(parentId) || 1) : 1;
   const currentWidth = subtreeWidths.get(nodeId) || 1;
   
-  // Calculate x position based on parent's position and subtree widths
   const parentX = parentId ? 
     (nodePositions.get(parentId)?.x ?? centerX) : 
     centerX;
@@ -197,8 +196,8 @@ function calculateNodePosition(
   const offset = (nodeSpacing * (index - (totalNodesInLevel - 1) / 2));
   const x = parentX + offset;
 
-  // Y position is simply based on level
-  const y = centerY + (level * levelHeight);
+  // Add progressive Y offset based on index
+  const y = centerY + (level * levelHeight) + (index * progressiveYOffset);
 
   const position = { x, y };
   nodePositions.set(nodeId, position);
