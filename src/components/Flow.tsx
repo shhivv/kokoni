@@ -1,15 +1,13 @@
 "use client"
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
-  addEdge,
   Background,
   useNodesState,
   useEdgesState,
   MarkerType,
-  type Connection,
-  Panel,
-  Controls,
+  type Node,
+  SelectionMode,
 } from '@xyflow/react';
  
 import '@xyflow/react/dist/style.css';
@@ -17,7 +15,10 @@ import '@xyflow/react/dist/style.css';
 import FloatingEdge from '~/components/floating-edge';
 import FloatingConnectionLine from '~/components/floating-connection-line';
 import { initialElements } from '~/lib/initialElements';
- 
+import { api } from "~/trpc/react";
+import { useToast } from "~/hooks/use-toast";
+import { useRouter, useParams } from "next/navigation";
+
 const data = {
   "American Revolution": {
     "Colonial Period (1763-1775)": {
@@ -57,76 +58,181 @@ const edgeTypes = {
   floating: FloatingEdge,
 };
 
-// Custom node styles
+// Custom node styles with selection indicator (without movement)
 const nodeStyles = {
-  background: '#262626', // Neutral-800
-  color: '#fafafa', // Neutral-50
-  border: '1px solid #525252', // Neutral-600
+  background: '#262626',
+  color: '#fafafa',
+  border: '1px solid #525252',
   borderRadius: '0.5rem',
   padding: '0.5rem 1rem',
+  transition: 'border 0.2s ease, box-shadow 0.2s ease',
 };
 
-// Custom edge styles
+const selectedNodeStyles = {
+  ...nodeStyles,
+  border: '2px solid #3b82f6', // Blue border
+  boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.5)', // Blue glow
+};
+
+// Custom edge styles with dotted line
 const defaultEdgeOptions = {
   type: 'floating',
   markerEnd: {
     type: MarkerType.Arrow,
-    color: '#525252', // Neutral-600
+    color: '#525252',
   },
   style: {
-    stroke: '#525252', // Neutral-600
+    stroke: '#525252',
+    strokeDasharray: '5,5',
+    strokeWidth: 1.5,
   },
 };
  
 export const Flow: React.FC = () => {
-  const [nodes, , onNodesChange] = useNodesState(
+  const [nodes, setNodes, onNodesChange] = useNodesState(
     initialNodes.map(node => ({
       ...node,
       style: nodeStyles,
     }))
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
+  const [prompt, setPrompt] = useState("");
+  const { toast } = useToast();
+  const router = useRouter();
+  const params = useParams();
 
-  const onConnect = useCallback(
-    (params: Connection) =>{
-      setEdges((eds) =>
-        addEdge(
-          {
-            ...params,
-            ...defaultEdgeOptions,
-          },
-          eds
-        )
-      )} ,
-    [setEdges]
-  );
- 
+  const generateReport = api.report.produceReport.useMutation({
+    onSuccess: () => {
+      // Redirect to the same URL but with response tab
+      router.push(`/${params.slug}?tab=response`);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update node styles whenever selection changes
+  useEffect(() => {
+    setNodes((nds) => 
+      nds.map((node) => ({
+        ...node,
+        style: selectedNodes.find(n => n.id === node.id)
+          ? selectedNodeStyles 
+          : nodeStyles,
+      }))
+    );
+  }, [selectedNodes, setNodes]);
+
+  // Handle node selection
+  const onSelectionChange = useCallback(({ nodes: selected }: { nodes: Node[] }) => {
+    if (!selected.length) {
+      // Don't clear selection when clicking canvas
+      return;
+    }
+
+    // Get the newly selected node
+    const newNode = selected[selected.length - 1];
+    
+    // Add to selection if not already selected
+    setSelectedNodes((prev) => {
+      if (prev.find(n => n.id === newNode.id)) {
+        return prev;
+      }
+      return [...prev, newNode];
+    });
+  }, []);
+
+  // Clear selection handler
+  const clearSelection = useCallback(() => {
+    setSelectedNodes([]);
+  }, []);
+
   return (
-    <div className="w-full h-full bg-neutral-900">
+    <div className="w-full h-full bg-neutral-900 floating-edges relative">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onSelectionChange={onSelectionChange}
         proOptions={{ hideAttribution: true }}
-        onConnect={onConnect}
         fitView
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         connectionLineComponent={FloatingConnectionLine}
         className="bg-neutral-900"
-        nodesDraggable
+        nodesDraggable={true}
+        nodesConnectable={false}
         panOnDrag
         minZoom={0.2}
         maxZoom={4}
+        selectionMode={"multi" as unknown as SelectionMode}
+        selectNodesOnDrag={false}
+        multiSelectionKeyCode="Shift"
       >
         <Background 
-          color="#525252" // Neutral-600
+          color="#525252"
           gap={16}
           size={1}
           className="bg-neutral-900"
         />
       </ReactFlow>
+
+      {/* Debug Panel */}
+      {selectedNodes.length > 0 && (
+        <div className="absolute top-4 right-4 bg-neutral-800 border border-neutral-700 rounded-lg p-4 max-w-xs shadow-lg">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-sm font-medium text-neutral-200">Selected Nodes:</h3>
+            <button
+              onClick={clearSelection}
+              className="text-xs text-neutral-400 hover:text-neutral-200 transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+          <ul className="space-y-1">
+            {selectedNodes.map((node) => (
+              <li key={node.id} className="text-sm text-neutral-400">
+                {node.data.label}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Prompt Input */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-[600px]">
+        <div className="relative">
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Add additional instructions for the report..."
+            className="w-full h-32 px-4 py-3 pr-24 text-sm text-neutral-200 bg-neutral-800 border border-neutral-700 
+                     rounded-lg placeholder:text-neutral-500 focus:outline-none focus:ring-2 
+                     focus:ring-blue-500 focus:border-transparent resize-none"
+          />
+          <button
+            onClick={() => {
+              generateReport.mutate({
+                nodes: selectedNodes.map(n => n.data.label),
+                prompt
+              });
+            }}
+            disabled={selectedNodes.length === 0 || generateReport.isPending}
+            className="absolute right-2 bottom-4 px-4 py-2 text-sm font-medium text-white 
+                     bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 
+                     focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-neutral-800
+                     disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {generateReport.isPending ? "Generating..." : "Generate Report"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
