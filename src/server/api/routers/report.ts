@@ -1,32 +1,63 @@
 import { z } from "zod";
-import { TavilySearchAPIClient } from "@tavily/js";
+import { tavily } from "@tavily/core";
 import { groq } from "@ai-sdk/groq";
 import { env } from "~/env";
-
+import { generateObject } from "ai";
 import {
   createTRPCRouter,
   protectedProcedure,
 } from "~/server/api/trpc";
 
+const tvly = tavily({ apiKey: env.TAVILY_API_KEY });
+
 export const reportRouter = createTRPCRouter({
   produceReport: protectedProcedure
-    // Accept any JSON object using passthrough so that extra fields are allowed.
-    .input(z.object({}).passthrough())
+    .input(z.object({ 
+      keywords: z.array(z.string()),
+      prompt: z.string().optional(),
+    }))
     .mutation(async ({ ctx, input }): Promise<{ markdown: string }> => {
-      // now given a list of keywords as arrays, use the tavily api to perform 1 search
-      // for each keyword, and then compile the content presented
-      // and present it to the groq model and make it produce a detailed report from that
-      //and return that
-      const markdownText = `
-# Hardcoded Report
+      // Search for each keyword
+      const searchPromises = input.keywords.map(keyword => 
+        tvly.search(keyword, {
+          options: {
+            searchDepth: "basic",
+          },
+        })
+      );
 
-This report is generated based on the provided input.
+      const searchResults = await Promise.all(searchPromises);
 
-- Analysis point one
-- Analysis point two
+      // Compile search results by keyword
+      const compiledResults = input.keywords.map((keyword, index) => ({
+        keyword,
+        content: searchResults[index]?.results
+          .map(r => r.content)
+          .join('\n\n') || ''
+      }));
 
-Thank you for using our service!
-      `;
+      // Generate report using the search results
+      const markdownText = await generateObject({
+        model: groq("mixtral-8x7b-32768"),
+        schema: z.object({
+          report: z.string(),
+        }),
+        prompt: `Create a detailed report based on the following research:
+
+${compiledResults.map(r => `## ${r.keyword}\n${r.content}`).join('\n\n')}
+
+Additional instructions: ${input.prompt || ''}
+
+Requirements:
+1. Use Markdown format
+2. Create a cohesive narrative connecting all topics
+3. Include relevant quotes or data from the research
+4. Organize with clear headings and subheadings
+5. Use bullet points for key findings
+6. Add a summary section at the end
+
+The report should synthesize the information and make connections between the topics.`,
+      }).then(response => response.object.report);
       
       return { markdown: markdownText };
     }),
