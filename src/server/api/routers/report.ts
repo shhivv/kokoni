@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { TavilySearchAPIClient } from "@tavily/js";
+import { groq } from "@ai-sdk/groq";
+import { env } from "~/env";
 
 import {
   createTRPCRouter,
@@ -10,7 +13,10 @@ export const reportRouter = createTRPCRouter({
     // Accept any JSON object using passthrough so that extra fields are allowed.
     .input(z.object({}).passthrough())
     .mutation(async ({ ctx, input }): Promise<{ markdown: string }> => {
-      // Hardcoded markdown text
+      // now given a list of keywords as arrays, use the tavily api to perform 1 search
+      // for each keyword, and then compile the content presented
+      // and present it to the groq model and make it produce a detailed report from that
+      //and return that
       const markdownText = `
 # Hardcoded Report
 

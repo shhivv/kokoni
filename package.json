@@ -21,6 +21,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/groq": "^1.1.10",
     "@auth/prisma-adapter": "^2.7.2",
     "@hookform/resolvers": "^4.0.0",
     "@prisma/client": "^5.14.0",
@@ -36,10 +37,12 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@t3-oss/env-nextjs": "^0.10.1",
     "@tanstack/react-query": "^5.50.0",
+    "@tavily/core": "^0.3.1",
     "@trpc/client": "^11.0.0-rc.446",
     "@trpc/react-query": "^11.0.0-rc.446",
     "@trpc/server": "^11.0.0-rc.446",
     "@xyflow/react": "^12.4.3",
+    "ai": "^4.1.44",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "d3": "^7.9.0",

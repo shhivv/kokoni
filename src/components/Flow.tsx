@@ -87,7 +87,13 @@ const defaultEdgeOptions = {
     strokeWidth: 1.5,
   },
 };
- 
+
+interface FlowNode extends Node {
+  data: {
+    label: string;
+  };
+}
+
 export const Flow: React.FC = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(
     initialNodes.map(node => ({
@@ -96,7 +102,7 @@ export const Flow: React.FC = () => {
     }))
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
+  const [selectedNodes, setSelectedNodes] = useState<FlowNode[]>([]);
   const [prompt, setPrompt] = useState("");
   const { toast } = useToast();
   const router = useRouter();
@@ -104,7 +110,6 @@ export const Flow: React.FC = () => {
 
   const generateReport = api.report.produceReport.useMutation({
     onSuccess: () => {
-      // Redirect to the same URL but with response tab
       router.push(`/${params.slug}?tab=response`);
     },
     onError: (error) => {
@@ -129,16 +134,14 @@ export const Flow: React.FC = () => {
   }, [selectedNodes, setNodes]);
 
   // Handle node selection
-  const onSelectionChange = useCallback(({ nodes: selected }: { nodes: Node[] }) => {
+  const onSelectionChange = useCallback(({ nodes: selected }: { nodes: FlowNode[] }) => {
     if (!selected.length) {
-      // Don't clear selection when clicking canvas
       return;
     }
 
-    // Get the newly selected node
     const newNode = selected[selected.length - 1];
+    if (!newNode) return;
     
-    // Add to selection if not already selected
     setSelectedNodes((prev) => {
       if (prev.find(n => n.id === newNode.id)) {
         return prev;
@@ -229,7 +232,14 @@ export const Flow: React.FC = () => {
                      focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-neutral-800
                      disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {generateReport.isPending ? "Generating..." : "Generate Report"}
+            {generateReport.isPending ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                <span>Generating...</span>
+              </div>
+            ) : (
+              "Generate Report"
+            )}
           </button>
         </div>
       </div>

@@ -3,6 +3,8 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from "~/server/api/trpc";
+import { groq } from "@ai-sdk/groq";
+import { generateObject } from "ai";
 
 export const searchRouter = createTRPCRouter({
   // GET /searches
@@ -56,6 +58,42 @@ export const searchRouter = createTRPCRouter({
       additionalInstruction: z.string().default(""),
     }))
     .mutation(async ({ ctx, input }) => {
+      // Use Groq to structure the knowledge map
+      const structurePrompt = `Create a hierarchical knowledge map structure as a JSON object for the topic: "${input.name}". 
+The structure should be nested with related concepts grouped together. Focus on key concepts, subtopics, and their relationships.
+
+Additional instructions: ${input.additionalInstruction}
+
+Requirements:
+1. Return only valid JSON
+2. Use nested objects and arrays to show hierarchy
+3. Keep the structure focused and relevant
+4. Include important subtopics and related concepts
+5. Make connections between related ideas
+
+Example format:
+{
+  "main topic": {
+    "subtopic1": ["related concept", "another concept"],
+    "subtopic2": {
+      "nested topic": ["detail1", "detail2"],
+      "another nested": ["more", "details"]
+    }
+  }
+}
+
+Return only the JSON structure.`;
+
+      const response = await generateObject({
+        model: groq("mixtral-8x7b-32768"),
+        schema: z.object({
+          knowledgeMap: z.record(z.any()),
+        }),
+        prompt: structurePrompt,
+      });
+
+      let knowledgeMap = response.object.knowledgeMap;
+
       return await ctx.db.search.create({
         data: {
           name: input.name,
@@ -63,12 +101,12 @@ export const searchRouter = createTRPCRouter({
           createdById: ctx.session.user.id,
           KnowledgeMap: {
             create: {
-              contents: {},
+              contents: knowledgeMap,
             },
           },
           Report: {
             create: {
-              contents: "### Dummy Markdown\n\nThis is a placeholder for actual report content."
+              contents: "Report will be generated when requested.",
             },
           },
         },
