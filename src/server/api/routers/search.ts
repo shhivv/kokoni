@@ -106,7 +106,7 @@ Return only the JSON structure.`;
           },
           Report: {
             create: {
-              contents: "Report will be generated when requested.",
+              contents: "No report available yet.",
             },
           },
         },

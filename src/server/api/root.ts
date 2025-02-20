@@ -1,5 +1,4 @@
 import { reportRouter } from "~/server/api/routers/report";
-import { keywordRouter } from "~/server/api/routers/keyword";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { searchRouter } from "~/server/api/routers/search";
 
@@ -10,7 +9,6 @@ import { searchRouter } from "~/server/api/routers/search";
  */
 export const appRouter = createTRPCRouter({
   report: reportRouter,
-  keyword: keywordRouter,
   search: searchRouter
 });
 

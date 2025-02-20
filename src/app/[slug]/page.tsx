@@ -8,6 +8,7 @@ export default async function Page({
   params: { slug: string }
 }) {
   const session = await auth()
+  params = await params
   
   if (!session) {
     redirect("/api/auth/signin")

@@ -9,9 +9,7 @@ import {
   type Node,
   SelectionMode,
 } from '@xyflow/react';
- 
 import '@xyflow/react/dist/style.css';
- 
 import FloatingEdge from '~/components/floating-edge';
 import FloatingConnectionLine from '~/components/floating-connection-line';
 import { initialElements } from '~/lib/initialElements';
@@ -95,33 +93,33 @@ interface FlowNode extends Node {
 }
 
 export const Flow: React.FC = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(
-    initialNodes.map(node => ({
-      ...node,
-      style: nodeStyles,
-    }))
-  );
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const params = useParams<{ slug: string }>();
+  const { data: search } = api.search.getById.useQuery({ 
+    id: params.slug as string 
+  });
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNodes, setSelectedNodes] = useState<FlowNode[]>([]);
   const [prompt, setPrompt] = useState("");
   const { toast } = useToast();
   const router = useRouter();
-  const params = useParams();
 
-  const generateReport = api.report.produceReport.useMutation({
-    onSuccess: () => {
-      router.push(`/${params.slug}?tab=response`);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  // Update nodes when search data changes
+  useEffect(() => {
+    if (search?.KnowledgeMap?.contents) {
+      const { nodes: newNodes, edges: newEdges } = initialElements(
+        search.KnowledgeMap.contents as Record<string, unknown>
+      );
+      setNodes(newNodes.map(node => ({
+        ...node,
+        style: nodeStyles,
+      })));
+      setEdges(newEdges);
+    }
+  }, [search, setNodes, setEdges]);
 
-  // Update node styles whenever selection changes
+  // Restore node highlighting
   useEffect(() => {
     setNodes((nds) => 
       nds.map((node) => ({
@@ -133,13 +131,30 @@ export const Flow: React.FC = () => {
     );
   }, [selectedNodes, setNodes]);
 
+  const generateReport = api.report.produceReport.useMutation({
+    onSuccess: () => {
+      router.push(`/${params.slug}?tab=response`);
+      toast({
+        title: "Success",
+        description: "Report generated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Handle node selection
-  const onSelectionChange = useCallback(({ nodes: selected }: { nodes: FlowNode[] }) => {
+  const onSelectionChange = useCallback(({ nodes: selected }: { nodes: Node[] }) => {
     if (!selected.length) {
       return;
     }
 
-    const newNode = selected[selected.length - 1];
+    const newNode = selected[selected.length - 1] as FlowNode;
     if (!newNode) return;
     
     setSelectedNodes((prev) => {
@@ -162,7 +177,7 @@ export const Flow: React.FC = () => {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onSelectionChange={onSelectionChange}
+        onSelectionChange={onSelectionChange as any}
         proOptions={{ hideAttribution: true }}
         fitView
         edgeTypes={edgeTypes}
@@ -222,8 +237,10 @@ export const Flow: React.FC = () => {
           <button
             onClick={() => {
               generateReport.mutate({
-                nodes: selectedNodes.map(n => n.data.label),
-                prompt
+                originalPrompt: search?.name || "",
+                keywords: selectedNodes.map(n => n.data.label),
+                prompt: prompt,
+                searchId: params.slug as string,
               });
             }}
             disabled={selectedNodes.length === 0 || generateReport.isPending}

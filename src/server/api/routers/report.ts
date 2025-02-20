@@ -2,7 +2,7 @@ import { z } from "zod";
 import { tavily } from "@tavily/core";
 import { groq } from "@ai-sdk/groq";
 import { env } from "~/env";
-import { generateObject } from "ai";
+import { generateText } from "ai";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -13,8 +13,10 @@ const tvly = tavily({ apiKey: env.TAVILY_API_KEY });
 export const reportRouter = createTRPCRouter({
   produceReport: protectedProcedure
     .input(z.object({ 
+      originalPrompt: z.string(),
       keywords: z.array(z.string()),
       prompt: z.string().optional(),
+      searchId: z.string(),
     }))
     .mutation(async ({ ctx, input }): Promise<{ markdown: string }> => {
       // Search for each keyword
@@ -35,15 +37,14 @@ export const reportRouter = createTRPCRouter({
           .map(r => r.content)
           .join('\n\n') || ''
       }));
-
+      console.log(compiledResults)
       // Generate report using the search results
-      const markdownText = await generateObject({
-        model: groq("mixtral-8x7b-32768"),
-        schema: z.object({
-          report: z.string(),
-        }),
+      const markdownText = await generateText({
+        model: groq("deepseek-r1-distill-llama-70b"),
         prompt: `Create a detailed report based on the following research:
+QUESTION: ${input.originalPrompt}
 
+RESEARCH:
 ${compiledResults.map(r => `## ${r.keyword}\n${r.content}`).join('\n\n')}
 
 Additional instructions: ${input.prompt || ''}
@@ -57,8 +58,16 @@ Requirements:
 6. Add a summary section at the end
 
 The report should synthesize the information and make connections between the topics.`,
-      }).then(response => response.object.report);
+      });
       
-      return { markdown: markdownText };
+      // Save the report to the database
+      const report = await ctx.db.report.update({
+        where: { searchId: input.searchId },
+        data: {
+          contents: markdownText.text.replace(/^# /, '').replace(/<\/?think>/g, '') ,
+        },
+      });
+
+      return { markdown: markdownText.text.replace(/^# /, '').replace(/<\/?think>/g, '') };
     }),
 });
