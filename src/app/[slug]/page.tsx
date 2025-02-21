@@ -2,21 +2,20 @@ import { auth } from "~/server/auth"
 import { SearchTabs } from "~/components/search-tabs"
 import { redirect } from "next/navigation"
 
-export default async function Page({
-  params,
-}: {
-  params: { slug: string }
-}) {
+interface PageProps {
+  params: Promise<{ slug: string }>
+}
+
+export default async function Page({ params }: PageProps) {
   const session = await auth()
-  params = await params
-  
+  const { slug } = await params
   if (!session) {
     redirect("/api/auth/signin")
   }
 
   return (
     <main className="h-[calc(100vh-4rem)] w-full bg-neutral-900">
-      <SearchTabs searchId={params.slug} />
+      <SearchTabs searchId={slug} />
     </main>
   );
 }

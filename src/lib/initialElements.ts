@@ -120,7 +120,6 @@ interface NodePosition {
   x: number;
   y: number;
 }
-
 // Keep track of the width needed for each subtree
 const subtreeWidths = new Map<string, number>();
 
@@ -200,6 +199,8 @@ interface LayoutOptions {
   centerY: number;
   levelRadius: number;
   levelSpacing: number;
+  nodeSpacing: number;
+  levelHeight: number;
 }
 
 function processJsonLevel(
@@ -223,7 +224,7 @@ function processJsonLevel(
 
   if (Array.isArray(data)) {
     // For arrays, create nodes for each item
-    data.forEach((item, index) => {
+    data.forEach((item) => {
       const currentIndex = levelNodes.get(level)!;
       const nodeId = `node-${level}-${currentIndex}`;
       
@@ -316,6 +317,8 @@ export function initialElements(
     centerY?: number;
     levelRadius?: number;
     levelSpacing?: number;
+    nodeSpacing?: number;
+    levelHeight?: number;
   } = {}
 ): { nodes: FlowNode[]; edges: FlowEdge[] } {
   subtreeWidths.clear();
@@ -329,6 +332,8 @@ export function initialElements(
     centerY: options.centerY ?? 100,
     levelRadius: options.levelRadius ?? 150,
     levelSpacing: options.levelSpacing ?? 100,
+    nodeSpacing: options.nodeSpacing ?? 200,
+    levelHeight: options.levelHeight ?? 120,
   };
 
   const levelNodes = new Map<number, number>();

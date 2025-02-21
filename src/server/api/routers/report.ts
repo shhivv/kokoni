@@ -34,7 +34,7 @@ export const reportRouter = createTRPCRouter({
         keyword,
         content: searchResults[index]?.results
           .map(r => r.content)
-          .join('\n\n') || ''
+          .join('\n\n') ?? ''
       }));
       console.log(compiledResults)
       // Generate report using the search results
@@ -46,7 +46,7 @@ QUESTION: ${input.originalPrompt}
 RESEARCH:
 ${compiledResults.map(r => `## ${r.keyword}\n${r.content}`).join('\n\n')}
 
-Additional instructions: ${input.prompt || ''}
+Additional instructions: ${input.prompt ?? ''}
 
 Requirements:
 1. Use Markdown format
@@ -60,7 +60,7 @@ The report should synthesize the information and make connections between the to
       });
       
       // Save the report to the database
-      const report = await ctx.db.report.update({
+      await ctx.db.report.update({
         where: { searchId: input.searchId },
         data: {
           contents: markdownText.text.replace(/^# /, '').replace(/<\/?think>/g, '') ,

@@ -14,7 +14,7 @@ interface ReportProps {
 export function Report({ searchId }: ReportProps) {
   const { data: search, isLoading } = api.search.getById.useQuery({ 
     id: searchId 
-  })
+  });
 
   if (isLoading) {
     return (
@@ -24,7 +24,7 @@ export function Report({ searchId }: ReportProps) {
         <Skeleton className="h-4 w-[300px]" />
         <Skeleton className="h-4 w-[400px]" />
       </div>
-    )
+    );
   }
 
   if (!search?.Report?.contents) {
@@ -32,7 +32,7 @@ export function Report({ searchId }: ReportProps) {
       <div className="p-4 text-neutral-400">
         No report available yet.
       </div>
-    )
+    );
   }
 
   return (
@@ -54,8 +54,8 @@ export function Report({ searchId }: ReportProps) {
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
       >
-        {search.Report.contents as string}
+        {search.Report.contents}
       </ReactMarkdown>
     </div>
-  )
+  );
 } 

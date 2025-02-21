@@ -119,7 +119,7 @@ IMPORTANT: Return only the JSON structure without any explanations, comments or 
         prompt: structurePrompt,
       });
 
-      let knowledgeMap = response.object.knowledgeMap;
+      const knowledgeMap = response.object.knowledgeMap;
 
       return await ctx.db.search.create({
         data: {

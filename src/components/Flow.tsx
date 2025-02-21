@@ -7,7 +7,10 @@ import {
   useEdgesState,
   MarkerType,
   type Node,
-  SelectionMode,
+  type SelectionMode,
+  type Edge,
+  type OnSelectionChangeParams,
+  type ConnectionLineComponent,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import FloatingEdge from '~/components/floating-edge';
@@ -17,46 +20,20 @@ import { api } from "~/trpc/react";
 import { useToast } from "~/hooks/use-toast";
 import { useRouter, useParams } from "next/navigation";
 
-const data = {
-  "American Revolution": {
-    "Colonial Period (1763-1775)": {
-      "British Colonial Policy": {
-        "Navigation Acts": {
-          "Trade Restrictions": [
-            "Mercantilism",
-            "Port Regulations",
-            "Colonial Manufacturing Limits"
-          ],
-          "Enforcement": [
-            "Customs Officers",
-            "Writs of Assistance",
-            "Vice-Admiralty Courts"
-          ]
-        },
-        "Taxation": [
-          "Sugar Act",
-          "Stamp Act",
-          "Townshend Acts",
-          "Tea Act"
-        ],
-        "Coercive Acts": [
-          "Boston Port Act",
-          "Massachusetts Government Act",
-          "Administration of Justice Act",
-          "Quartering Act"
-        ]
-      }
-    }
-  }
+// Define the node type
+interface FlowNode extends Node {
+  data: {
+    label: string;
+  };
+  style?: React.CSSProperties;
 }
 
-const { nodes: initialNodes, edges: initialEdges } = initialElements(data as unknown as Record<string, unknown>);
- 
+
 const edgeTypes = {
   floating: FloatingEdge,
 };
 
-// Custom node styles with selection indicator (without movement)
+// Custom node styles
 const nodeStyles = {
   background: '#262626',
   color: '#fafafa',
@@ -68,11 +45,10 @@ const nodeStyles = {
 
 const selectedNodeStyles = {
   ...nodeStyles,
-  border: '2px solid #3b82f6', // Blue border
-  boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.5)', // Blue glow
+  border: '2px solid #3b82f6',
+  boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.5)',
 };
 
-// Custom edge styles with dotted line
 const defaultEdgeOptions = {
   type: 'floating',
   markerEnd: {
@@ -86,20 +62,14 @@ const defaultEdgeOptions = {
   },
 };
 
-interface FlowNode extends Node {
-  data: {
-    label: string;
-  };
-}
-
 export const Flow: React.FC = () => {
   const params = useParams<{ slug: string }>();
   const { data: search } = api.search.getById.useQuery({ 
-    id: params.slug as string 
+    id: params.slug
   });
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [selectedNodes, setSelectedNodes] = useState<FlowNode[]>([]);
   const [prompt, setPrompt] = useState("");
   const { toast } = useToast();
@@ -111,11 +81,13 @@ export const Flow: React.FC = () => {
       const { nodes: newNodes, edges: newEdges } = initialElements(
         search.KnowledgeMap.contents as Record<string, unknown>
       );
-      setNodes(newNodes.map(node => ({
-        ...node,
-        style: nodeStyles,
-      })));
-      setEdges(newEdges);
+      setNodes(
+        newNodes.map(node => ({
+          ...node,
+          style: nodeStyles,
+        })) as FlowNode[]
+      );
+      setEdges(newEdges as Edge[]);
     }
   }, [search, setNodes, setEdges]);
 
@@ -149,12 +121,12 @@ export const Flow: React.FC = () => {
   });
 
   // Handle node selection
-  const onSelectionChange = useCallback(({ nodes: selected }: { nodes: Node[] }) => {
-    if (!selected.length) {
+  const onSelectionChange = useCallback((params: OnSelectionChangeParams) => {
+    if (!params.nodes.length) {
       return;
     }
 
-    const newNode = selected[selected.length - 1] as FlowNode;
+    const newNode = params.nodes[params.nodes.length - 1] as FlowNode;
     if (!newNode) return;
     
     setSelectedNodes((prev) => {
@@ -177,12 +149,12 @@ export const Flow: React.FC = () => {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onSelectionChange={onSelectionChange as any}
+        onSelectionChange={onSelectionChange}
         proOptions={{ hideAttribution: true }}
         fitView
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
-        connectionLineComponent={FloatingConnectionLine}
+        connectionLineComponent={FloatingConnectionLine as unknown as ConnectionLineComponent<FlowNode>}
         className="bg-neutral-900"
         nodesDraggable={true}
         nodesConnectable={false}
@@ -237,10 +209,10 @@ export const Flow: React.FC = () => {
           <button
             onClick={() => {
               generateReport.mutate({
-                originalPrompt: search?.name || "",
+                originalPrompt: search?.name ?? "",
                 keywords: selectedNodes.map(n => n.data.label),
                 prompt: prompt,
-                searchId: params.slug as string,
+                searchId: params.slug,
               });
             }}
             disabled={selectedNodes.length === 0 || generateReport.isPending}

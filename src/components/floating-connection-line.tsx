@@ -1,5 +1,5 @@
 import React from 'react';
-import { getBezierPath, Position } from '@xyflow/react';
+import { getBezierPath, type Position, type Node } from '@xyflow/react';
 import { getEdgeParams } from '~/lib/initialElements';
 
 interface FloatingConnectionLineProps {
@@ -7,7 +7,12 @@ interface FloatingConnectionLineProps {
   toY: number;
   fromPosition: Position;
   toPosition: Position;
-  fromNode: any;
+  fromNode: Node & {
+    x: number;
+    y: number;
+    measured: { width: number; height: number };
+    internals: { positionAbsolute: { x: number; y: number } };
+  };
 }
 
 function FloatingConnectionLine({
@@ -25,7 +30,7 @@ function FloatingConnectionLine({
     id: 'connection-target',
     x: toX,
     y: toY,
-    measured: { width: 1, height: 1 },
+    measured: { width: 1, height: 1 } as const,
     internals: { positionAbsolute: { x: toX, y: toY } },
   };
 

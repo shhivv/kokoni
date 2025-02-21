@@ -9,7 +9,8 @@ export function SearchTabs({ searchId }: { searchId: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentTab = searchParams.get("tab") || "knowledge-map";
+  const currentTab = searchParams.get("tab") ?? "knowledge-map";
+
 
   const onTabChange = (value: string) => {
     router.push(`${pathname}?tab=${value}`);
