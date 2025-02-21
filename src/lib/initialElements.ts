@@ -163,7 +163,7 @@ function calculateSubtreeWidth(
 function calculateNodePosition(
   index: number, 
   level: number, 
-  totalNodesInLevel: number, 
+  totalNodesInLevel: number,
   options: LayoutOptions,
   nodeId: string,
   parentId: string | null
@@ -171,33 +171,24 @@ function calculateNodePosition(
   const {
     centerX,
     centerY,
-    levelRadius,
-    levelSpacing,
+    levelHeight = 120, // Increased vertical spacing
+    nodeSpacing = 200  // Decreased horizontal spacing
   } = options;
 
-  const nodeSpacing = 200;
-  const levelHeight = 120;
-  const progressiveYOffset = 30; // Offset for each subsequent node at same level
+  // Get parent position if it exists
+  const parentPosition = parentId ? nodePositions.get(parentId) : null;
+  const parentX = parentPosition ? parentPosition.x : centerX;
+  const parentY = parentPosition ? parentPosition.y : centerY;
 
-  if (level === 0) {
-    return {
-      x: centerX,
-      y: centerY
-    };
-  }
-
-  const parentWidth = parentId ? (subtreeWidths.get(parentId) || 1) : 1;
-  const currentWidth = subtreeWidths.get(nodeId) || 1;
+  // Calculate progressive Y offset based on index
+  const progressiveYOffset = 30; // pixels to offset each sibling node
   
-  const parentX = parentId ? 
-    (nodePositions.get(parentId)?.x ?? centerX) : 
-    centerX;
-  
-  const offset = (nodeSpacing * (index - (totalNodesInLevel - 1) / 2));
+  // Calculate position
+  const offset = (nodeSpacing * (index - (totalNodesInLevel - 1) / 2)) * 0.5; // Reduced horizontal spread
   const x = parentX + offset;
-
-  // Add progressive Y offset based on index
-  const y = centerY + (level * levelHeight) + (index * progressiveYOffset);
+  
+  // Add level height and progressive offset
+  const y = parentY + (level * levelHeight) + (index * progressiveYOffset);
 
   const position = { x, y };
   nodePositions.set(nodeId, position);

@@ -5,6 +5,10 @@ import {
 } from "~/server/api/trpc";
 import { groq } from "@ai-sdk/groq";
 import { generateObject } from "ai";
+import { tavily } from "@tavily/core";
+import { env } from "~/env";
+
+const tvly = tavily({ apiKey: env.TAVILY_API_KEY });
 
 export const searchRouter = createTRPCRouter({
   // GET /searches
@@ -59,33 +63,56 @@ export const searchRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       // Use Groq to structure the knowledge map
-      const structurePrompt = `Create a hierarchical knowledge map structure as a JSON object for the topic: "${input.name}". 
+      const search = await tvly.search(input.name, {
+        options: {
+          searchDepth: "basic",
+          maxResults: 1,
+        },
+      });
+      const structurePrompt = `Create a hierarchical knowledge map structure as a JSON object for the topic: "${input.name}" 
+
+Here are some key points to consider:
+${search.results.slice(0, 2).map(r => r.content).join("\n")}
+
 The structure should be nested with related concepts grouped together. Focus on key concepts, subtopics, and their relationships.
 
 Additional instructions: ${input.additionalInstruction}
 
 Requirements:
-1. Return only valid JSON
+1. Your response must be a valid JSON object without any additional text
 2. Use nested objects and arrays to show hierarchy
-3. Keep the structure focused and relevant
+3. Keep the structure focused and relevant to the topic
 4. Include important subtopics and related concepts
 5. Make connections between related ideas
+6. Use clear, human-readable labels with spaces instead of underscores (e.g., "Campus Response" instead of "campus_response")
 
-Example format:
+Example format (DO NOT copy this exact structure, create an appropriate one for the topic):
 {
-  "main topic": {
-    "subtopic1": ["related concept", "another concept"],
-    "subtopic2": {
-      "nested topic": ["detail1", "detail2"],
-      "another nested": ["more", "details"]
+  "mainTopic": "${input.name}",
+  "overview": "Brief description",
+  "keyComponents": [
+    {
+      "name": "Component One", 
+      "aspects": ["Aspect One", "Aspect Two"],
+      "relatedConcepts": ["Related Concept", "Another Concept"]
+    }
+  ],
+  "subtopics": {
+    "Primary Subtopic": {
+      "definition": "Brief explanation",
+      "elements": ["Element One", "Element Two"]
+    },
+    "Secondary Subtopic": {
+      "definition": "Brief explanation",
+      "elements": ["Element One", "Element Two"]
     }
   }
 }
 
-Return only the JSON structure.`;
-
+IMPORTANT: Return only the JSON structure without any explanations, comments or code blocks. Use proper capitalization and spaces in all labels.`;
+      console.log(structurePrompt);
       const response = await generateObject({
-        model: groq("mixtral-8x7b-32768"),
+        model: groq("gemma2-9b-it"),
         schema: z.object({
           knowledgeMap: z.record(z.any()),
         }),
