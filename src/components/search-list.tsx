@@ -54,31 +54,29 @@ export function SearchList() {
       <SidebarGroupContent>
         <SidebarMenu>
           {searches?.map((search) => (
-            <ContextMenu key={search.id}>
-              <ContextMenuTrigger>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={search.id === currentId}
-                    onClick={() => router.push(`/${search.id}`)}
-                  >
-                    <button>
-                      <Search className="h-4 w-4" />
-                      <span>{search.name}</span>
-                    </button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </ContextMenuTrigger>
-              <ContextMenuContent>
-                <ContextMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={() => handleDeleteSearch(search.id)}
-                >
-                  Delete
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
+            <SidebarMenuItem key={search.id}>
+              <SidebarMenuButton
+                asChild
+                isActive={search.id === currentId}
+                onClick={() => router.push(`/${search.id}`)}
+              >
+                <button>
+                  <Search className="h-4 w-4" />
+                  <span>{search.name}</span>
+                </button>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           ))}
+        </SidebarMenu>
+      </SidebarGroupContent>  
+
+      <SidebarGroupContent>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton>
+              <span>Credits Remaining: {100 - (searches?.length || 0)}/100</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

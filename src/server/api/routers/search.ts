@@ -62,6 +62,17 @@ export const searchRouter = createTRPCRouter({
       additionalInstruction: z.string().default(""),
     }))
     .mutation(async ({ ctx, input }) => {
+
+      const userSearches = await ctx.db.search.count({
+        where: {
+          createdById: ctx.session.user.id,
+        },
+      });
+
+      if (userSearches >= 100) {
+        throw new Error("You have reached the maximum number of searches");
+      }
+
       // Use Groq to structure the knowledge map
       const search = await tvly.search(input.name, {
         options: {
