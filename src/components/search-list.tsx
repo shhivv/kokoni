@@ -69,16 +69,6 @@ export function SearchList() {
           ))}
         </SidebarMenu>
       </SidebarGroupContent>  
-
-      <SidebarGroupContent>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <span>Credits Remaining: {100 - (searches?.length || 0)}/100</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarGroupContent>
     </SidebarGroup>
   )
 } 

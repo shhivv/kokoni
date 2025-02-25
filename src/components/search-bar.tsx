@@ -34,6 +34,10 @@ export function SearchBar(): JSX.Element {
     },
   })
 
+  const { data: searches } = api.search.getAll.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+  })
+
   // Mutation to create a new search
   const createSearch = api.search.create.useMutation({
     onSuccess: async (data) => {
@@ -65,33 +69,38 @@ export function SearchBar(): JSX.Element {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="w-full justify-center flex items-center gap-4">
-        <FormField
-          control={form.control}
-          name="query"
-          render={({ field }) => (
-            <FormItem className="w-full max-w-md">
-              <FormControl>
-                <Input
-                  className="w-full border-0 border-b-2 border-neutral-700 rounded-none h-12 focus-visible:ring-0 hover:border-neutral-500 focus:border-neutral-100 transition-colors bg-transparent text-neutral-100 placeholder:text-neutral-500"
-                  placeholder="Ask anything..."
-                  {...field}
-                  disabled={createSearch.status === "pending"}
-                />
-              </FormControl>
-              <FormMessage className="text-red-400" />
-            </FormItem>
-          )}
-        />
-        <Button
-          type="submit"
-          className="bg-neutral-800 hover:bg-neutral-700 text-neutral-100"
-          disabled={createSearch.status === "pending"}
-        >
-          <ArrowRight/>
-        </Button>
-      </form>
-    </Form>
+    <div className="flex flex-col gap-2">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full justify-center flex items-center gap-4">
+          <FormField
+            control={form.control}
+            name="query"
+            render={({ field }) => (
+              <FormItem className="w-full max-w-md">
+                <FormControl>
+                  <Input
+                    className="w-full border-0 border-b-2 border-neutral-700 rounded-none h-12 focus-visible:ring-0 hover:border-neutral-500 focus:border-neutral-100 transition-colors bg-transparent text-neutral-100 placeholder:text-neutral-500"
+                    placeholder="Ask anything..."
+                    {...field}
+                    disabled={createSearch.status === "pending"}
+                  />
+                </FormControl>
+                <FormMessage className="text-red-400" />
+              </FormItem>
+            )}
+          />
+          <Button
+            type="submit"
+            className="bg-neutral-800 hover:bg-neutral-700 text-neutral-100"
+            disabled={createSearch.status === "pending"}
+          >
+            <ArrowRight/>
+          </Button>
+        </form>
+      </Form>
+      <p className="text-sm text-neutral-500 text-center">
+        Credits Remaining: {100 - (searches?.length || 0)}/100
+      </p>
+    </div>
   )
 }
