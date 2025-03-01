@@ -69,9 +69,9 @@ export function SearchBar(): JSX.Element {
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col w-full gap-2">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full justify-center flex items-center gap-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full  justify-center flex items-center gap-4">
           <FormField
             control={form.control}
             name="query"
@@ -99,7 +99,7 @@ export function SearchBar(): JSX.Element {
         </form>
       </Form>
       <p className="text-sm text-neutral-500 text-center">
-        Credits Remaining: {100 - (searches?.length || 0)}/100
+        Credits Remaining: {100 - (searches?.length ?? 0)}/100
       </p>
     </div>
   )
