@@ -1,0 +1,22 @@
+name: Deploy
+on:
+  push:
+    paths:
+      - prisma/migrations/** # Only run this workflow when migrations are updated
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+      - name: Install dependencies
+        run: bun install
+      - name: Apply all pending migrations to the database
+        run: bun run prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

@@ -7,7 +7,7 @@ import { cn } from "~/lib/utils"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "~/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "~/components/ui/sidebar"
 
-const MotionLink = motion(Link)
+const MotionLink = motion.create(Link)
 
 interface SidebarActionsProps {
   session: {
