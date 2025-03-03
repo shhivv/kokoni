@@ -35,9 +35,9 @@ const edgeTypes = {
 
 // Custom node styles
 const nodeStyles = {
-  background: '#262626',
-  color: '#fafafa',
-  border: '1px solid #525252',
+  background: 'hsl(var(--card))',
+  color: 'hsl(var(--foreground))',
+  border: '1px solid hsl(var(--border))',
   borderRadius: '0.5rem',
   padding: '0.5rem 1rem',
   transition: 'border 0.2s ease, box-shadow 0.2s ease',
@@ -45,18 +45,18 @@ const nodeStyles = {
 
 const selectedNodeStyles = {
   ...nodeStyles,
-  border: '2px solid #3b82f6',
-  boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.5)',
+  border: '2px solid hsl(var(--primary))',
+  boxShadow: '0 0 0 2px hsla(var(--primary), 0.5)',
 };
 
 const defaultEdgeOptions = {
   type: 'floating',
   markerEnd: {
     type: MarkerType.Arrow,
-    color: '#525252',
+    color: 'hsl(var(--border))',
   },
   style: {
-    stroke: '#525252',
+    stroke: 'hsl(var(--border))',
     strokeDasharray: '5,5',
     strokeWidth: 1.5,
   },
@@ -152,6 +152,10 @@ export const Flow: React.FC = () => {
         onSelectionChange={onSelectionChange}
         proOptions={{ hideAttribution: true }}
         fitView
+        fitViewOptions={{ 
+          padding: 0.5,  // Reduced from default
+          maxZoom: 1.5,  // Reduced max zoom
+        }}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         connectionLineComponent={FloatingConnectionLine as unknown as ConnectionLineComponent<FlowNode>}
@@ -160,7 +164,7 @@ export const Flow: React.FC = () => {
         nodesConnectable={false}
         panOnDrag
         minZoom={0.2}
-        maxZoom={4}
+        maxZoom={1.5}  // Reduced from 4 to 1.5
         selectionMode={"multi" as unknown as SelectionMode}
         selectNodesOnDrag={false}
         multiSelectionKeyCode="Shift"
@@ -208,14 +212,14 @@ export const Flow: React.FC = () => {
               });
             }}
             disabled={selectedNodes.length === 0 || generateReport.isPending}
-            className="absolute right-2 bottom-4 px-4 py-2 text-sm font-medium text-white 
-                     bg-primary rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 
-                     focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-neutral-800
+            className="absolute right-2 bottom-4 px-4 py-2 text-sm font-medium text-card-foreground 
+                     bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 
+                     focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
                      disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {generateReport.isPending ? (
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-background/20 border-t-background rounded-full animate-spin" />
                 <span>Generating...</span>
               </div>
             ) : (
