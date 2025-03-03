@@ -100,21 +100,17 @@ Requirements:
 Example format (DO NOT copy this exact structure, create an appropriate one for the topic):
 {
   "mainTopic": "${input.name}",
-  "overview": "Brief description",
   "keyComponents": [
     {
-      "name": "Component One", 
       "aspects": ["Aspect One", "Aspect Two"],
       "relatedConcepts": ["Related Concept", "Another Concept"]
     }
   ],
   "subtopics": {
     "Primary Subtopic": {
-      "definition": "Brief explanation",
       "elements": ["Element One", "Element Two"]
     },
     "Secondary Subtopic": {
-      "definition": "Brief explanation",
       "elements": ["Element One", "Element Two"]
     }
   }
