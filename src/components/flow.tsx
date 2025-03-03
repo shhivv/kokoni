@@ -143,7 +143,7 @@ export const Flow: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full h-full bg-neutral-900 floating-edges relative">
+    <div className="w-full h-full bg-background floating-edges relative">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -155,7 +155,7 @@ export const Flow: React.FC = () => {
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         connectionLineComponent={FloatingConnectionLine as unknown as ConnectionLineComponent<FlowNode>}
-        className="bg-neutral-900"
+        className="bg-background"
         nodesDraggable={true}
         nodesConnectable={false}
         panOnDrag
@@ -165,29 +165,21 @@ export const Flow: React.FC = () => {
         selectNodesOnDrag={false}
         multiSelectionKeyCode="Shift"
       >
-        <Background 
-          color="#525252"
-          gap={16}
-          size={1}
-          className="bg-neutral-900"
-        />
       </ReactFlow>
 
       {/* Debug Panel */}
       {selectedNodes.length > 0 && (
-        <div className="absolute top-4 right-4 bg-neutral-800 border border-neutral-700 rounded-lg p-4 max-w-xs shadow-lg">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-sm font-medium text-neutral-200">Selected Nodes:</h3>
-            <button
-              onClick={clearSelection}
-              className="text-xs text-neutral-400 hover:text-neutral-200 transition-colors"
-            >
-              Clear
-            </button>
-          </div>
+        <div className="absolute top-4 right-4 bg-card border border-border rounded-lg p-4 max-w-xs shadow-lg">
+          <h3 className="text-sm font-medium text-foreground">Selected Nodes:</h3>
+          <button
+            onClick={clearSelection}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Clear
+          </button>
           <ul className="space-y-1">
             {selectedNodes.map((node) => (
-              <li key={node.id} className="text-sm text-neutral-400">
+              <li key={node.id} className="text-sm text-muted-foreground">
                 {node.data.label}
               </li>
             ))}
@@ -202,9 +194,9 @@ export const Flow: React.FC = () => {
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Add additional instructions for the report..."
-            className="w-full h-32 px-4 py-3 pr-24 text-sm text-neutral-200 bg-neutral-800 border border-neutral-700 
-                     rounded-lg placeholder:text-neutral-500 focus:outline-none focus:ring-2 
-                     focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full h-32 px-4 py-3 pr-24 text-sm text-foreground bg-card border border-border
+                     rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 
+                     focus:ring-primary focus:border-transparent resize-none"
           />
           <button
             onClick={() => {
@@ -217,7 +209,7 @@ export const Flow: React.FC = () => {
             }}
             disabled={selectedNodes.length === 0 || generateReport.isPending}
             className="absolute right-2 bottom-4 px-4 py-2 text-sm font-medium text-white 
-                     bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 
+                     bg-primary rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 
                      focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-neutral-800
                      disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >

@@ -13,8 +13,8 @@ export async function AppSidebar() {
   const session = await auth()
 
   return (
-    <Sidebar className="border-r border-neutral-800">
-      <SidebarHeader className="p-4 border-b border-neutral-800">
+    <Sidebar className="border-r border-border">
+      <SidebarHeader className="p-4 border-b border-border">
         <AnimatedHeader />
       </SidebarHeader>
 
@@ -22,7 +22,7 @@ export async function AppSidebar() {
         {session ? <SearchList /> : null}
       </SidebarContent>
 
-      <SidebarFooter className="p-2 border-t border-neutral-800 space-y-2">
+      <SidebarFooter className="p-2 border-t border-border space-y-2">
         <SidebarActions
           session={
             session

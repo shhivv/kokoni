@@ -29,7 +29,7 @@ export function Report({ searchId }: ReportProps) {
 
   if (!search?.Report?.contents) {
     return (
-      <div className="p-4 text-neutral-400">
+      <div className="p-4 text-muted-foreground">
         No report available yet.
       </div>
     );
@@ -52,7 +52,16 @@ export function Report({ searchId }: ReportProps) {
       <h1>{search.name}</h1>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
+        rehypePlugins={[rehypeRaw]} 
+        className={cn(
+          "prose dark:prose-invert max-w-none",
+          "prose-p:text-muted-foreground",
+          "prose-li:text-muted-foreground",
+          "prose-strong:text-foreground",
+          "prose-code:text-foreground prose-code:bg-card prose-code:rounded prose-code:px-1",
+          "prose-pre:bg-card prose-pre:border prose-pre:border-border",
+          "prose-blockquote:border-l-border prose-blockquote:text-muted-foreground",
+        )}
       >
         {search.Report.contents}
       </ReactMarkdown>

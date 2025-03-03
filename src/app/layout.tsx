@@ -25,7 +25,7 @@ export default function RootLayout({
           <SidebarProvider defaultOpen>
             <AppSidebar />
               <SidebarTrigger className="p-4 m-2"/>
-              <div className="flex min-h-screen flex-col items-center justify-center bg-background w-full text-neutral-100 p-4">
+              <div className="flex min-h-screen flex-col items-center justify-center bg-background w-full text-foreground p-4">
               {children}
               <Toaster/>
               </div>

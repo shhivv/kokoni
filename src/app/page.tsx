@@ -7,9 +7,7 @@ export default async function Home() {
 
   return (
     <HydrateClient>
-        {
-          session && <SearchBar/>
-        }
+      <SearchBar/>
     </HydrateClient>
   );
 }

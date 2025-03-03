@@ -14,7 +14,7 @@ export default async function Page({ params }: PageProps) {
   }
 
   return (
-    <main className="h-[calc(100vh-4rem)] w-full bg-neutral-900">
+    <main className="h-[calc(100vh-4rem)] w-full bg-background">
       <SearchTabs searchId={slug} />
     </main>
   );
