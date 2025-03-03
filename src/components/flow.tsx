@@ -104,9 +104,9 @@ export const Flow: React.FC = () => {
   }, [selectedNodes, setNodes]);
 
   const generateReport = api.report.produceReport.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate the search query to refetch the report
-      utils.search.getById.invalidate({ id: params.slug });
+      await utils.search.getById.invalidate({ id: params.slug });
       router.push(`/${params.slug}?tab=response`);
       toast({
         title: "Success",

@@ -7,7 +7,6 @@ import {
   protectedProcedure,
 } from "~/server/api/trpc";
 import { groq } from "@ai-sdk/groq";
-import { observable } from '@trpc/server/observable';
 const tvly = tavily({ apiKey: env.TAVILY_API_KEY });
 
 export const reportRouter = createTRPCRouter({

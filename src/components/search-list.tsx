@@ -43,9 +43,9 @@ export function SearchList() {
   })
 
   // Handler for deleting a search
-  const _handleDeleteSearch = (id: string) => {
-    deleteSearch.mutate({ id })
-  }
+  // const _handleDeleteSearch = (id: string) => {
+  //   deleteSearch.mutate({ id })
+  // }
 
   return (
     <SidebarGroup>
