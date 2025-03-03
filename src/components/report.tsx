@@ -6,48 +6,15 @@ import { Skeleton } from "~/components/ui/skeleton"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
-import { useEffect, useState } from "react"
 
 interface ReportProps {
   searchId: string;
 }
 
 export function Report({ searchId }: ReportProps) {
-  const [streamedContent, setStreamedContent] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  
   const { data: search, isLoading } = api.search.getById.useQuery({ 
     id: searchId 
   });
-
-  // Subscribe to report generation
-  api.report.produceReport.useSubscription(
-    {
-      originalPrompt: search?.name ?? "",
-      keywords: [], // This should be populated with the selected keywords
-      searchId,
-    },
-    {
-      onData: (data) => {
-        setStreamedContent(prev => prev + data.content);
-      },
-      onError: (err) => {
-        console.error('Streaming error:', err);
-        setIsGenerating(false);
-      },
-      enabled: !search?.Report?.contents,
-    },
-  );
-
-  useEffect(() => {
-    if (search?.Report?.contents) {
-      setStreamedContent(search.Report.contents);
-      setIsGenerating(false);
-    } else {
-      setIsGenerating(true);
-      setStreamedContent("");
-    }
-  }, [search?.Report?.contents]);
 
   if (isLoading) {
     return (
@@ -60,7 +27,7 @@ export function Report({ searchId }: ReportProps) {
     );
   }
 
-  if (!streamedContent && !isGenerating) {
+  if (!search?.Report?.contents) {
     return (
       <div className="p-4 text-muted-foreground">
         No report available yet.
@@ -82,19 +49,13 @@ export function Report({ searchId }: ReportProps) {
       "prose-blockquote:border-l-border prose-blockquote:text-muted-foreground",
       "prose-a:text-primary prose-a:no-underline hover:prose-a:underline"
     )}>
-      <h1>{search?.name}</h1>
+      <h1>{search.name}</h1>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
       >
-        {streamedContent}
+        {search.Report.contents}
       </ReactMarkdown>
-      {isGenerating && (
-        <div className="mt-4 flex items-center gap-2 text-muted-foreground">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-primary"></div>
-          <span className="text-sm">Generating report...</span>
-        </div>
-      )}
     </div>
   );
 } 

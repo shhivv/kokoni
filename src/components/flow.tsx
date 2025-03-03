@@ -73,7 +73,7 @@ export const Flow: React.FC = () => {
   const [prompt, setPrompt] = useState("");
   const { toast } = useToast();
   const router = useRouter();
-  const [isGenerating, setIsGenerating] = useState(false);
+  const utils = api.useUtils();
 
   // Update nodes when search data changes
   useEffect(() => {
@@ -103,31 +103,24 @@ export const Flow: React.FC = () => {
     );
   }, [selectedNodes, setNodes]);
 
-  api.report.produceReport.useSubscription(
-    {
-      originalPrompt: search?.name ?? "",
-      keywords: selectedNodes.map(n => n.data.label),
-      prompt,
-      searchId: params.slug,
+  const generateReport = api.report.produceReport.useMutation({
+    onSuccess: () => {
+      // Invalidate the search query to refetch the report
+      utils.search.getById.invalidate({ id: params.slug });
+      router.push(`/${params.slug}?tab=response`);
+      toast({
+        title: "Success",
+        description: "Report generated successfully",
+      });
     },
-    {
-      onData: (_data) => {
-        // Report is being generated
-        if (!isGenerating) {
-          router.push(`/${params.slug}?tab=response`);
-        }
-      },
-      onError: (error) => {
-        setIsGenerating(false);
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      },
-      enabled: isGenerating,
-    }
-  );
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   // Handle node selection
   const onSelectionChange = useCallback((params: OnSelectionChangeParams) => {
@@ -213,16 +206,20 @@ export const Flow: React.FC = () => {
           />
           <button
             onClick={() => {
-              setIsGenerating(true);
-              router.push(`/${params.slug}?tab=response`);
+              generateReport.mutate({
+                originalPrompt: search?.name ?? "",
+                keywords: selectedNodes.map(n => n.data.label),
+                prompt,
+                searchId: params.slug,
+              });
             }}
-            disabled={selectedNodes.length === 0 || isGenerating}
+            disabled={selectedNodes.length === 0 || generateReport.isPending}
             className="absolute right-2 bottom-4 px-4 py-2 text-sm font-medium text-card-foreground 
                      bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 
                      focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
                      disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isGenerating ? (
+            {generateReport.isPending ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-background/20 border-t-background rounded-full animate-spin" />
                 <span>Generating...</span>
