@@ -21,43 +21,33 @@ export function Report({ searchId }: ReportProps) {
   });
 
   // Subscribe to report generation
-  const utils = api.useUtils();
+  api.report.produceReport.useSubscription(
+    {
+      originalPrompt: search?.name ?? "",
+      keywords: [], // This should be populated with the selected keywords
+      searchId,
+    },
+    {
+      onData: (data) => {
+        setStreamedContent(prev => prev + data.content);
+      },
+      onError: (err) => {
+        console.error('Streaming error:', err);
+        setIsGenerating(false);
+      },
+      enabled: !search?.Report?.contents,
+    },
+  );
+
   useEffect(() => {
     if (search?.Report?.contents) {
       setStreamedContent(search.Report.contents);
-      return;
+      setIsGenerating(false);
+    } else {
+      setIsGenerating(true);
+      setStreamedContent("");
     }
-
-    const subscription = utils.report.produceReport.subscribe(
-      {
-        originalPrompt: search?.name ?? "",
-        keywords: [], // This should be populated with the selected keywords
-        searchId,
-      },
-      {
-        onStarted: () => {
-          setIsGenerating(true);
-          setStreamedContent("");
-        },
-        onData: (data) => {
-          if (data.type === 'content' && data.content) {
-            setStreamedContent(prev => prev + data.content);
-          }
-        },
-        onError: (err) => {
-          console.error('Streaming error:', err);
-          setIsGenerating(false);
-        },
-        onComplete: () => {
-          setIsGenerating(false);
-        },
-      },
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [search?.Report?.contents, search?.name, searchId, utils.report.produceReport]);
+  }, [search?.Report?.contents]);
 
   if (isLoading) {
     return (

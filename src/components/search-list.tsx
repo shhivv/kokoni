@@ -43,7 +43,7 @@ export function SearchList() {
   })
 
   // Handler for deleting a search
-  const handleDeleteSearch = (id: string) => {
+  const _handleDeleteSearch = (id: string) => {
     deleteSearch.mutate({ id })
   }
 

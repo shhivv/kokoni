@@ -2,7 +2,6 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
-  Background,
   useNodesState,
   useEdgesState,
   MarkerType,
@@ -74,6 +73,7 @@ export const Flow: React.FC = () => {
   const [prompt, setPrompt] = useState("");
   const { toast } = useToast();
   const router = useRouter();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Update nodes when search data changes
   useEffect(() => {
@@ -103,22 +103,31 @@ export const Flow: React.FC = () => {
     );
   }, [selectedNodes, setNodes]);
 
-  const generateReport = api.report.produceReport.useMutation({
-    onSuccess: () => {
-      router.push(`/${params.slug}?tab=response`);
-      toast({
-        title: "Success",
-        description: "Report generated successfully",
-      });
+  api.report.produceReport.useSubscription(
+    {
+      originalPrompt: search?.name ?? "",
+      keywords: selectedNodes.map(n => n.data.label),
+      prompt,
+      searchId: params.slug,
     },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+    {
+      onData: (_data) => {
+        // Report is being generated
+        if (!isGenerating) {
+          router.push(`/${params.slug}?tab=response`);
+        }
+      },
+      onError: (error) => {
+        setIsGenerating(false);
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      },
+      enabled: isGenerating,
+    }
+  );
 
   // Handle node selection
   const onSelectionChange = useCallback((params: OnSelectionChangeParams) => {
@@ -204,20 +213,16 @@ export const Flow: React.FC = () => {
           />
           <button
             onClick={() => {
-              generateReport.mutate({
-                originalPrompt: search?.name ?? "",
-                keywords: selectedNodes.map(n => n.data.label),
-                prompt: prompt,
-                searchId: params.slug,
-              });
+              setIsGenerating(true);
+              router.push(`/${params.slug}?tab=response`);
             }}
-            disabled={selectedNodes.length === 0 || generateReport.isPending}
+            disabled={selectedNodes.length === 0 || isGenerating}
             className="absolute right-2 bottom-4 px-4 py-2 text-sm font-medium text-card-foreground 
                      bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 
                      focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
                      disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {generateReport.isPending ? (
+            {isGenerating ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-background/20 border-t-background rounded-full animate-spin" />
                 <span>Generating...</span>

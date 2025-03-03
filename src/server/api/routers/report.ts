@@ -18,26 +18,28 @@ export const reportRouter = createTRPCRouter({
       prompt: z.string().optional(),
       searchId: z.string(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      const searchPromises = input.keywords.map(keyword => 
-        tvly.search(input.originalPrompt + ":" + keyword, {
-          options: {
-            searchDepth: "basic",
-          },
-        })
-      );
+    .subscription(async ({ ctx, input }) => {
+      return observable<{ type: 'content', content: string }>((emit) => {
+        (async () => {
+          const searchPromises = input.keywords.map(keyword => 
+            tvly.search(input.originalPrompt + ":" + keyword, {
+              options: {
+                searchDepth: "basic",
+              },
+            })
+          );
 
-      const searchResults = await Promise.all(searchPromises);
-      const compiledResults = input.keywords.map((keyword, index) => ({
-        keyword,
-        content: searchResults[index]?.results
-          .map(r => r.content)
-          .join('\n\n') ?? ''
-      }));
+          const searchResults = await Promise.all(searchPromises);
+          const compiledResults = input.keywords.map((keyword, index) => ({
+            keyword,
+            content: searchResults[index]?.results
+              .map(r => r.content)
+              .join('\n\n') ?? ''
+          }));
 
-      const { textStream } = streamText({
-        model: groq("gemma2-9b-it"),
-        prompt: `Create a detailed report based on the following research:
+          const { textStream } = streamText({
+            model: groq("gemma2-9b-it"),
+            prompt: `Create a detailed report based on the following research:
 QUESTION: ${input.originalPrompt}
 
 RESEARCH:
@@ -54,21 +56,28 @@ Requirements:
 6. Add a summary section at the end
 
 The report should synthesize the information and make connections between the topics.`,
+          });
+
+          let fullText = '';
+          for await (const chunk of textStream) {
+            const cleanChunk = chunk.replace(/^# /, '').replace(/<\/?think>/g, '');
+            fullText += cleanChunk;
+            emit.next({ type: 'content', content: cleanChunk });
+          }
+
+          await ctx.db.report.update({
+            where: { searchId: input.searchId },
+            data: {
+              contents: fullText,
+            },
+          });
+
+          emit.complete();
+        })().catch((err) => emit.error(err));
+
+        return () => {
+          // Cleanup if needed
+        };
       });
-
-      let fullText = '';
-      for await (const chunk of textStream) {
-        const cleanChunk = chunk.replace(/^# /, '').replace(/<\/?think>/g, '');
-        fullText += cleanChunk;
-      }
-
-      await ctx.db.report.update({
-        where: { searchId: input.searchId },
-        data: {
-          contents: fullText,
-        },
-      });
-
-      return { success: true };
     }),
 });

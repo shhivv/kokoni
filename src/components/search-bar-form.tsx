@@ -17,7 +17,7 @@ import {
 import { Input } from "~/components/ui/input"
 import { ArrowRight } from "lucide-react"
 import { api } from "~/trpc/react"
-import { Session } from "next-auth"
+import type { Session } from "next-auth"
 
 const FormSchema = z.object({
   query: z.string().min(1, {
@@ -64,9 +64,9 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
     },
   })
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!session) {
-      signIn()
+      await signIn()
       return
     }
     
@@ -91,9 +91,9 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
                     placeholder={session ? "Ask anything..." : "Sign in to ask questions..."}
                     {...field}
                     disabled={createSearch.status === "pending"}
-                    onFocus={() => {
+                    onFocus={async () => {
                       if (!session) {
-                        signIn()
+                        await signIn()
                       }
                     }}
                   />
