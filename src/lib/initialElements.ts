@@ -170,8 +170,8 @@ function calculateNodePosition(
   const {
     centerX,
     centerY,
-    levelHeight = 120, // Increased vertical spacing
-    nodeSpacing = 200  // Decreased horizontal spacing
+    levelHeight = 100, // Reduced vertical spacing
+    nodeSpacing = 180  // Reduced horizontal spacing
   } = options;
 
   // Get parent position if it exists
@@ -179,14 +179,15 @@ function calculateNodePosition(
   const parentX = parentPosition ? parentPosition.x : centerX;
   const parentY = parentPosition ? parentPosition.y : centerY;
 
-  // Calculate progressive Y offset based on index
-  const progressiveYOffset = 30; // pixels to offset each sibling node
+  // Calculate progressive Y offset based on index and level
+  const progressiveYOffset = level === 0 ? 0 : 15; // Only apply Y offset after first level
   
-  // Calculate position
-  const offset = (nodeSpacing * (index - (totalNodesInLevel - 1) / 2)) * 0.5; // Reduced horizontal spread
+  // Calculate position with balanced spread
+  const spreadFactor = Math.max(1, Math.min(1.5, totalNodesInLevel / 3)); // Adjust spread based on number of nodes
+  const offset = (nodeSpacing * (index - (totalNodesInLevel - 1) / 2)) / spreadFactor;
   const x = parentX + offset;
   
-  // Add level height and progressive offset
+  // Add level height and smaller progressive offset
   const y = parentY + (level * levelHeight) + (index * progressiveYOffset);
 
   const position = { x, y };
@@ -322,18 +323,17 @@ export function initialElements(
   } = {}
 ): { nodes: FlowNode[]; edges: FlowEdge[] } {
   subtreeWidths.clear();
-  nodePositions.clear(); // Clear positions for new calculation
+  nodePositions.clear();
   
-  // First pass to calculate subtree widths
   calculateSubtreeWidth(data, 'node-0-0', 0);
 
   const layoutOptions: LayoutOptions = {
     centerX: options.centerX ?? window.innerWidth / 2,
-    centerY: options.centerY ?? 100,
+    centerY: options.centerY ?? 30, // Start even higher
     levelRadius: options.levelRadius ?? 150,
-    levelSpacing: options.levelSpacing ?? 100,
-    nodeSpacing: options.nodeSpacing ?? 200,
-    levelHeight: options.levelHeight ?? 120,
+    levelSpacing: options.levelSpacing ?? 80,
+    nodeSpacing: options.nodeSpacing ?? 180, // Reduced default spacing
+    levelHeight: options.levelHeight ?? 100, // Reduced level height
   };
 
   const levelNodes = new Map<number, number>();
