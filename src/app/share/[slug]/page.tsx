@@ -8,7 +8,7 @@ export default async function Page({ params }: PageProps) {
   const { slug } = await params
 
   return (
-    <main className="h-[calc(100vh-4rem)] w-full bg-background">
+    <main className="h-[calc(100vh-4r em)] w-full bg-background">
       <SearchTabs searchId={slug} />
     </main>
   );
