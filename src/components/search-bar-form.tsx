@@ -113,7 +113,7 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
       </Form>
       {session && (
         <p className="text-sm text-muted-foreground text-center">
-          Credits Remaining: {100 - (searchQuery.data?.length ?? 0)}/100
+          Credits Remaining: {5 - (searchQuery.data?.length ?? 0)}/5
         </p>
       )}
     </div>

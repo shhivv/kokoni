@@ -69,7 +69,7 @@ export const searchRouter = createTRPCRouter({
         },
       });
 
-      if (userSearches >= 100) {
+      if (userSearches >= 5) {
         throw new Error("You have reached the maximum number of searches");
       }
 
