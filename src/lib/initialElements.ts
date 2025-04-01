@@ -240,7 +240,7 @@ function processJsonLevel(
 
       nodes.push({
         id: nodeId,
-        data: { label: String(item) },
+        data: { label: typeof item === 'object' ? JSON.stringify(item) : String(item) },
         position,
       });
 

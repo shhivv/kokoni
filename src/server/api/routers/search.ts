@@ -96,6 +96,7 @@ Requirements:
 4. Include important subtopics and related concepts
 5. Make connections between related ideas
 6. Use clear, human-readable labels with spaces instead of underscores (e.g., "Campus Response" instead of "campus_response")
+7. Don't make the sub-topics too general.
 
 Example format (DO NOT copy this exact structure, create an appropriate one for the topic):
 {
