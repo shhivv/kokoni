@@ -132,9 +132,11 @@ export const Flow: React.FC = () => {
     if (!newNode) return;
     
     setSelectedNodes((prev) => {
+      // If node is already selected, remove it
       if (prev.find(n => n.id === newNode.id)) {
-        return prev;
+        return prev.filter(n => n.id !== newNode.id);
       }
+      // Otherwise add it
       return [...prev, newNode];
     });
   }, []);
