@@ -14,6 +14,10 @@ export default {
 			serif: [
 				'var(--font-newsreader)',
 				...fontFamily.serif
+			],
+			label: [
+				'var(--font-inter)',
+				...fontFamily.sans
 			]
   		},
   		borderRadius: {

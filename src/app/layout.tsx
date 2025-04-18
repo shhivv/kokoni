@@ -1,6 +1,6 @@
 import "~/styles/globals.css";
 
-import { Newsreader, Figtree }  from "next/font/google"
+import { Newsreader, Figtree, Inter }  from "next/font/google"
 import { type Metadata } from "next";
 
 import { TRPCReactProvider } from "~/trpc/react";
@@ -15,11 +15,12 @@ export const metadata: Metadata = {
 
 const newsreader = Newsreader({ subsets: ['latin'], variable: '--font-newsreader'})
 const figtree = Figtree({ subsets: ['latin'], variable: '--font-figtree'})
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter'})
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${newsreader.variable} ${figtree.variable} dark antialiased font-sans`}>
+    <html lang="en" className={`${newsreader.variable} ${figtree.variable} ${inter.variable} dark antialiased font-sans`}>
       <body>
         <TRPCReactProvider>
           <SidebarProvider defaultOpen={false}>

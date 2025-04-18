@@ -100,7 +100,7 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
   return (
     <div className="flex flex-col w-full gap-2 items-center justify-center min-h-[85vh]">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="w-[85vh] aspect-square flex flex-col items-center justify-center gap-4 relative">
+        <form autoComplete="false" onSubmit={form.handleSubmit(onSubmit)} className="w-[85vh] aspect-square flex flex-col items-center justify-center gap-4 relative">
           <FormField
             control={form.control}
             name="query"
@@ -113,11 +113,8 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
                     style={{ 
                       fontSize: `${getFontSize()}px`,
                       height: "85vh",
-                      padding: "4rem",
-                      lineHeight: "1.5",
-                      paddingTop: "calc(42.5vh - 1.5em)",
-                      whiteSpace: "pre-wrap",
-                      overflowWrap: "break-word"
+                      padding: "2rem",
+                      lineHeight: "1.2"
                     }}
                     placeholder={session ? `What do you want to learn about, ${session.user.name?.split(" ")[0]}` : "Sign in to ask questions..."}
                     {...field}
@@ -144,7 +141,7 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
         </form>
       </Form>
       {session && (
-        <p className="text-sm text-muted-foreground text-center">
+        <p className="text-xs text-muted-foreground text-center font-label">
           Credits Remaining: {5 - (searchQuery.data?.length ?? 0)}/5
         </p>
       )}
