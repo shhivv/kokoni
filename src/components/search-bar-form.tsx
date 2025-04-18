@@ -106,28 +106,32 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
             control={form.control}
             name="query"
             render={({ field }) => (
-              <FormItem className="w-full">
+              <FormItem className="w-full h-full">
                 <FormControl>
-                  <Textarea
-                    className="w-full font-serif focus:outline-none border-0 outline-0 rounded-none focus-visible:ring-0 hover:border-muted-foreground focus:border-foreground transition-all duration-300 bg-transparent text-foreground placeholder:text-muted-foreground text-center resize-none"
-                    autoComplete="false"
-                    style={{ 
-                      fontSize: `${getFontSize()}px`,
-                      height: "85vh",
-                      padding: "2rem",
-                      lineHeight: "1.2",
-                      whiteSpace: "pre-wrap",
-                    }}
-                    placeholder={session ? `What do you want to learn about, ${session.user.name?.split(" ")[0]}` : "Sign in to ask questions..."}
-                    {...field}
-                    onChange={handleInputChange}
-                    disabled={createSearch.status === "pending"}
-                    onFocus={async () => {
-                      if (!session) {
-                        await signIn()
-                      }
-                    }}
-                  />
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Textarea
+                      className="w-full font-serif focus:outline-none border-0 outline-0 rounded-none focus-visible:ring-0 hover:border-muted-foreground focus:border-foreground transition-all duration-300 bg-transparent text-foreground placeholder:text-muted-foreground text-center resize-none"
+                      autoComplete="false"
+                      style={{ 
+                        fontSize: `${getFontSize()}px`,
+                        lineHeight: "1.2",
+                        whiteSpace: "pre-wrap",
+                        padding: "0 2rem",
+                        height: "auto",
+                        maxHeight: "80%",
+                        overflow: "hidden"
+                      }}
+                      placeholder={session ? `What do you want to learn about, ${session.user.name?.split(" ")[0]}?` : "Sign in to ask questions..."}
+                      {...field}
+                      onChange={handleInputChange}
+                      disabled={createSearch.status === "pending"}
+                      onFocus={async () => {
+                        if (!session) {
+                          await signIn()
+                        }
+                      }}
+                    />
+                  </div>
                 </FormControl>
                 <FormMessage className="text-destructive" />
               </FormItem>
@@ -144,7 +148,7 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
       </Form>
       {session && (
         <p className="text-xs text-muted-foreground text-center font-label">
-          Credits Remaining: {5 - (searchQuery.data?.length ?? 0)}/5
+          Searches Remaining: {5 - (searchQuery.data?.length ?? 0)}/5
         </p>
       )}
     </div>
