@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   createTRPCRouter,
   protectedProcedure,
+  publicProcedure,
 } from "~/server/api/trpc";
 import { groq } from "@ai-sdk/groq";
 import { generateObject } from "ai";
@@ -28,7 +29,7 @@ export const searchRouter = createTRPCRouter({
       });
     }),
 
-  // GET /search/<id>
+  // GET /search/<id> (protected)
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -50,6 +51,32 @@ export const searchRouter = createTRPCRouter({
 
       if (!search) {
         throw new Error("Search not found or unauthorized");
+      }
+
+      return search;
+    }),
+
+  // GET /search/<id> (public)
+  getByIdPublic: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const search = await ctx.db.search.findUnique({
+        where: {
+          id: input.id,
+        },
+        select: {
+          name: true,
+          Report: {
+            select: {
+              contents: true,
+              updatedAt: true,
+            },
+          },
+        },
+      });
+
+      if (!search) {
+        throw new Error("Search not found");
       }
 
       return search;
