@@ -19,6 +19,7 @@ import { ArrowRight } from "lucide-react"
 import { api } from "~/trpc/react"
 import type { Session } from "next-auth"
 import { useState } from "react"
+import { Textarea } from "~/components/ui/textarea"
 
 const FormSchema = z.object({
   query: z.string().min(1, {
@@ -78,13 +79,13 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
     })
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value)
     form.setValue("query", e.target.value)
   }
 
   const getFontSize = () => {
-    const baseSize = 72 // Starting font size (increased from 48)
+    const baseSize = 64 // Starting font size (increased from 48)
     const minSize = 36 // Minimum font size (increased from 24)
     const maxLength = 20 // Length at which font size starts decreasing
     
@@ -107,14 +108,15 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormControl>
-                  <Input
-                    className="w-full font-serif focus:outline-none border-0 outline-0 rounded-none focus-visible:ring-0 hover:border-muted-foreground focus:border-foreground transition-all duration-300 bg-transparent text-foreground placeholder:text-muted-foreground text-center"
+                  <Textarea
+                    className="w-full font-serif focus:outline-none border-0 outline-0 rounded-none focus-visible:ring-0 hover:border-muted-foreground focus:border-foreground transition-all duration-300 bg-transparent text-foreground placeholder:text-muted-foreground text-center resize-none"
                     autoComplete="false"
                     style={{ 
                       fontSize: `${getFontSize()}px`,
                       height: "85vh",
                       padding: "2rem",
-                      lineHeight: "1.2"
+                      lineHeight: "1.2",
+                      whiteSpace: "pre-wrap",
                     }}
                     placeholder={session ? `What do you want to learn about, ${session.user.name?.split(" ")[0]}` : "Sign in to ask questions..."}
                     {...field}
