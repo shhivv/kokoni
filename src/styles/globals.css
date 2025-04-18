@@ -106,3 +106,8 @@
 .floating-edges .react-flow__handle {
   opacity: 0;
 }
+
+.image-background-main {
+  background-image: url("../../public/background.webp");
+  background-size: cover;
+}

@@ -18,6 +18,7 @@ import { Input } from "~/components/ui/input"
 import { ArrowRight } from "lucide-react"
 import { api } from "~/trpc/react"
 import type { Session } from "next-auth"
+import { useState } from "react"
 
 const FormSchema = z.object({
   query: z.string().min(1, {
@@ -32,6 +33,7 @@ interface SearchBarFormProps {
 export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
   const router = useRouter()
   const utils = api.useUtils()
+  const [inputValue, setInputValue] = useState("")
   
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -76,20 +78,50 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
     })
   }
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value)
+    form.setValue("query", e.target.value)
+  }
+
+  const getFontSize = () => {
+    const baseSize = 72 // Starting font size (increased from 48)
+    const minSize = 36 // Minimum font size (increased from 24)
+    const maxLength = 20 // Length at which font size starts decreasing
+    
+    if (inputValue.length <= maxLength) {
+      return baseSize
+    }
+    
+    // Decrease font size gradually after maxLength
+    const decrease = Math.min((inputValue.length - maxLength) * 3, baseSize - minSize)
+    return baseSize - decrease
+  }
+
   return (
-    <div className="flex flex-col w-full gap-2">
+    <div className="flex flex-col w-full gap-2 items-center justify-center min-h-[85vh]">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full justify-center flex items-center gap-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="w-[85vh] aspect-square flex flex-col items-center justify-center gap-4 relative">
           <FormField
             control={form.control}
             name="query"
             render={({ field }) => (
-              <FormItem className="w-full max-w-md">
+              <FormItem className="w-full">
                 <FormControl>
                   <Input
-                    className="w-full border-0 border-b-2 border-border rounded-none h-12 focus-visible:ring-0 hover:border-muted-foreground focus:border-foreground transition-colors bg-transparent text-foreground placeholder:text-muted-foreground"
-                    placeholder={session ? "Ask anything..." : "Sign in to ask questions..."}
+                    className="w-full font-serif focus:outline-none border-0 outline-0 rounded-none focus-visible:ring-0 hover:border-muted-foreground focus:border-foreground transition-all duration-300 bg-transparent text-foreground placeholder:text-muted-foreground text-center"
+                    autoComplete="false"
+                    style={{ 
+                      fontSize: `${getFontSize()}px`,
+                      height: "85vh",
+                      padding: "4rem",
+                      lineHeight: "1.5",
+                      paddingTop: "calc(42.5vh - 1.5em)",
+                      whiteSpace: "pre-wrap",
+                      overflowWrap: "break-word"
+                    }}
+                    placeholder={session ? `What do you want to learn about, ${session.user.name?.split(" ")[0]}` : "Sign in to ask questions..."}
                     {...field}
+                    onChange={handleInputChange}
                     disabled={createSearch.status === "pending"}
                     onFocus={async () => {
                       if (!session) {
@@ -104,10 +136,10 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
           />
           <Button
             type="submit"
-            className="bg-accent hover:bg-accent-foreground text-accent-foreground hover:text-accent"
+            className="absolute bottom-0 right-0 bg-accent hover:bg-accent-foreground text-accent-foreground hover:text-accent h-20 px-8"
             disabled={createSearch.status === "pending"}
           >
-            <ArrowRight/>
+            <ArrowRight className="w-8 h-8"/>
           </Button>
         </form>
       </Form>
