@@ -14,7 +14,6 @@ import {
   FormItem,
   FormMessage,
 } from "~/components/ui/form"
-import { Input } from "~/components/ui/input"
 import { ArrowRight } from "lucide-react"
 import { api } from "~/trpc/react"
 import type { Session } from "next-auth"
@@ -110,21 +109,28 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
                 <FormControl>
                   <div className="w-full h-full flex items-center justify-center">
                     <Textarea
-                      className="w-full font-serif focus:outline-none border-0 outline-0 rounded-none focus-visible:ring-0 hover:border-muted-foreground focus:border-foreground transition-all duration-300 bg-transparent text-foreground placeholder:text-muted-foreground text-center resize-none"
+                      className="w-full h-full font-serif focus:outline-none border-0 outline-0 rounded-none focus-visible:ring-0 hover:border-muted-foreground focus:border-foreground transition-all duration-300 bg-transparent text-foreground placeholder:text-muted-foreground text-center resize-none"
                       autoComplete="false"
                       style={{ 
                         fontSize: `${getFontSize()}px`,
                         lineHeight: "1.2",
+                        padding: "0",
+                        paddingTop: "calc(42.5vh - 1em)",
+                        height: "85vh",
                         whiteSpace: "pre-wrap",
-                        padding: "0 2rem",
-                        height: "auto",
-                        maxHeight: "80%",
-                        overflow: "hidden"
+                        overflowWrap: "break-word",
+                        verticalAlign: "middle"
                       }}
                       placeholder={session ? `What do you want to learn about, ${session.user.name?.split(" ")[0]}?` : "Sign in to ask questions..."}
                       {...field}
                       onChange={handleInputChange}
                       disabled={createSearch.status === "pending"}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          form.handleSubmit(onSubmit)();
+                        }
+                      }}
                       onFocus={async () => {
                         if (!session) {
                           await signIn()
@@ -139,10 +145,11 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
           />
           <Button
             type="submit"
-            className="absolute bottom-0 right-0 bg-accent hover:bg-accent-foreground text-accent-foreground hover:text-accent h-20 px-8"
+            variant="ghost"
+            className="absolute bottom-0 right-0 text-accent-foreground hover:text-foreground"
             disabled={createSearch.status === "pending"}
           >
-            <ArrowRight className="w-8 h-8"/>
+            <ArrowRight/>
           </Button>
         </form>
       </Form>

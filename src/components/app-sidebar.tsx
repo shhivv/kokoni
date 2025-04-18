@@ -13,7 +13,7 @@ export async function AppSidebar() {
   const session = await auth()
 
   return (
-    <Sidebar className="border-r border-border">
+    <Sidebar className="border-r-muted-foreground/10">
       <SidebarHeader className="p-4 border-b border-border">
         <AnimatedHeader />
       </SidebarHeader>
