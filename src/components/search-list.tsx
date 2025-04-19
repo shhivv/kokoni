@@ -59,8 +59,8 @@ export function SearchList() {
                 isActive={search.id === currentId}
                 onClick={() => router.push(`/${search.id}`)}
               >
-                <button className="py-2">
-                  <Search className="h-4 w-4" />
+                <button className="py-3">
+                  <Search className="h-4 w-4 text-muted-foreground" />
                   <span>{search.name}</span>
                 </button>
               </SidebarMenuButton>

@@ -18,6 +18,21 @@ import { initialElements } from '~/lib/initialElements';
 import { api } from "~/trpc/react";
 import { useToast } from "~/hooks/use-toast";
 import { useRouter, useParams } from "next/navigation";
+import { Button } from "~/components/ui/button";
+import { cn } from "~/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
+import {
+  BarChart3,
+  Globe,
+  Info,
+} from "lucide-react";
 
 // Define the node type
 interface FlowNode extends Node {
@@ -197,39 +212,92 @@ export const Flow: React.FC = () => {
 
       {/* Prompt Input */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-[600px]">
-        <div className="relative">
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Add additional instructions for the report..."
-            className="w-full h-32 px-4 py-3 pr-24 text-sm text-foreground bg-card border border-border
-                     rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 
-                     focus:ring-primary focus:border-transparent resize-none"
-          />
-          <button
-            onClick={() => {
-              generateReport.mutate({
-                originalPrompt: search?.name ?? "",
-                keywords: selectedNodes.map(n => n.data.label),
-                prompt,
-                searchId: params.slug,
-              });
-            }}
-            disabled={selectedNodes.length === 0 || generateReport.isPending}
-            className="absolute right-2 bottom-4 px-4 py-2 text-sm font-medium text-card-foreground 
-                     bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 
-                     focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
-                     disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {generateReport.isPending ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-background/20 border-t-background rounded-full animate-spin" />
-                <span>Generating...</span>
-              </div>
-            ) : (
-              "Generate Report"
-            )}
-          </button>
+        <div className="relative flex flex-col gap-2">
+          <div className="flex items-center gap-2 justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "text-muted-foreground hover:text-foreground transition-colors",
+                prompt.includes("[STATS]") && "text-foreground border-primary"
+              )}
+              onClick={() => setPrompt(prev => prev.includes("[STATS]") ? prev.replace("[STATS]", "").trim() : "[STATS] " + prev)}
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Statistics
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "text-muted-foreground hover:text-foreground transition-colors",
+                prompt.includes("[WEB]") && "text-foreground border-primary"
+              )}
+              onClick={() => setPrompt(prev => prev.includes("[WEB]") ? prev.replace("[WEB]", "").trim() : "[WEB] " + prev)}
+            >
+              <Globe className="w-4 h-4 mr-2" />
+              Web Search
+            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="text-muted-foreground hover:text-foreground">
+                  <Info className="w-4 h-4 mr-2" />
+                  Additional Info
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Additional Information</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">Add specific requirements or preferences for the report:</p>
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    className="w-full h-32 px-4 py-3 text-sm text-foreground bg-card border border-border rounded-lg 
+                             placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary 
+                             focus:border-transparent resize-none"
+                    placeholder="E.g., Focus on recent developments, specific time period, particular aspects..."
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="relative">
+            <input
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Add additional instructions for the report..."
+              className="w-full h-12 px-4 text-sm text-foreground bg-card border border-border
+                       rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 
+                       focus:ring-primary focus:border-transparent"
+            />
+            <Button
+              onClick={() => {
+                generateReport.mutate({
+                  originalPrompt: search?.name ?? "",
+                  keywords: selectedNodes.map(n => n.data.label),
+                  prompt,
+                  searchId: params.slug,
+                });
+              }}
+              disabled={selectedNodes.length === 0 || generateReport.isPending}
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 text-sm font-medium text-card-foreground 
+                       bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 
+                       focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
+                       disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {generateReport.isPending ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-background/20 border-t-background rounded-full animate-spin" />
+                  <span>Generating...</span>
+                </div>
+              ) : (
+                "Generate Report"
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

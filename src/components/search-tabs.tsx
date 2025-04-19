@@ -18,8 +18,8 @@ export function SearchTabs({ searchId }: { searchId: string }) {
 
   return (
     <Tabs value={currentTab} onValueChange={onTabChange} className="h-full flex flex-col">
-      <div className="px-4">
-        <TabsList className="h-12">
+      <div>
+        <TabsList className="m-4">
           <TabsTrigger value="knowledge-map">Knowledge Map</TabsTrigger>
           <TabsTrigger value="response">Report</TabsTrigger>
         </TabsList>

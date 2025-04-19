@@ -47,7 +47,7 @@ export function SidebarActions({ session }: SidebarActionsProps) {
                   className={cn(
                     "w-full px-3 py-4 rounded-md flex items-center",
                     "text-sm text-muted-foreground hover:text-foreground",
-                    "bg-card hover:bg-accent",
+                    "bg-muted hover:bg-accent",
                     "transition-all duration-200"
                   )}
                 >
@@ -72,7 +72,7 @@ export function SidebarActions({ session }: SidebarActionsProps) {
               className={cn(
                     "w-full px-3 py-4 rounded-md flex items-center",
                     "text-sm text-muted-foreground hover:text-foreground",
-                    "bg-card hover:bg-accent",
+                    "bg-muted hover:bg-accent",
                     "transition-all duration-200"
               )}
             >
