@@ -49,7 +49,7 @@ export function SearchList() {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Your Searches</SidebarGroupLabel>
+      <SidebarGroupLabel className="font-label">Your Searches</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
           {searches?.map((search) => (
@@ -59,7 +59,7 @@ export function SearchList() {
                 isActive={search.id === currentId}
                 onClick={() => router.push(`/${search.id}`)}
               >
-                <button>
+                <button className="py-2">
                   <Search className="h-4 w-4" />
                   <span>{search.name}</span>
                 </button>

@@ -11,9 +11,8 @@ export function SidebarHeader() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Sparkles className="w-5 h-5 text-muted-foreground" />
-      <span className="text-xl font-serif mt-1 font-medium text-foreground">
-        Kokoni
+      <span className="text-xl font-heading mt-1 font-bold text-muted-foreground">
+        ᲈ Kokoni
       </span>
     </motion.div>
   )

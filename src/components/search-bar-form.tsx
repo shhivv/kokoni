@@ -109,6 +109,7 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
                 <FormControl>
                   <div className="w-full h-full flex items-center justify-center">
                     <Textarea
+                    autoFocus
                       className="w-full h-full font-serif focus:outline-none border-0 outline-0 rounded-none focus-visible:ring-0 hover:border-muted-foreground focus:border-foreground transition-all duration-300 bg-transparent text-foreground placeholder:text-muted-foreground text-center resize-none"
                       autoComplete="false"
                       style={{ 

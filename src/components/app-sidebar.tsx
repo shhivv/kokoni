@@ -14,7 +14,7 @@ export async function AppSidebar() {
 
   return (
     <Sidebar className="border-r-muted-foreground/10">
-      <SidebarHeader className="p-4 border-b border-border">
+      <SidebarHeader className="pt-8 pb-4 px-4">
         <AnimatedHeader />
       </SidebarHeader>
 
@@ -22,7 +22,7 @@ export async function AppSidebar() {
         {session ? <SearchList /> : null}
       </SidebarContent>
 
-      <SidebarFooter className="p-2 border-t border-border space-y-2">
+      <SidebarFooter className="p-2 space-y-2">
         <SidebarActions
           session={
             session

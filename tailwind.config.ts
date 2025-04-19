@@ -18,6 +18,10 @@ export default {
 			label: [
 				'var(--font-inter)',
 				...fontFamily.sans
+			],
+			heading: [
+				'var(--font-rdh)',
+				...fontFamily.sans
 			]
   		},
   		borderRadius: {
