@@ -49,7 +49,7 @@ export function Report({ searchId }: ReportProps) {
       "prose-blockquote:border-l-border prose-blockquote:text-muted-foreground",
       "prose-a:text-primary prose-a:no-underline hover:prose-a:underline"
     )}>
-      <div className="w-1/2">
+      <div className="w-3/5">
 
       <p className="text-sm">{search.name}</p>
       <ReactMarkdown
