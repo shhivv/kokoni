@@ -2,7 +2,6 @@
 
 import { User2, ChevronsUpDown } from "lucide-react"
 import Link from "next/link"
-import { motion } from "framer-motion"
 import { cn } from "~/lib/utils"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "~/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuItem } from "~/components/ui/sidebar"

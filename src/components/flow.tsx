@@ -24,7 +24,6 @@ import {
   BarChart3,
   Globe,
 } from "lucide-react";
-import type { Session } from "next-auth"
 
 // Define the node type
 interface FlowNode extends Node {
@@ -94,7 +93,7 @@ export const Flow: React.FC = () => {
           style: nodeStyles,
         })) as FlowNode[]
       );
-      setEdges(newEdges as Edge[]);
+      setEdges(newEdges);
     }
   }, [search, setNodes, setEdges]);
 

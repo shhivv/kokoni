@@ -37,9 +37,9 @@ export function initialElements(data: Record<string, unknown>) {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
   let maxNodesInLevel = 0;
-  const levelNodes: { [key: number]: Node[] } = {};
+  const levelNodes: Record<number, Node[]> = {};
 
-  function processNode(node: TreeNode, level: number = 0, parentId?: string) {
+  function processNode(node: TreeNode, level = 0, parentId?: string) {
     // Create node
     const newNode: Node = {
       id: node.id,

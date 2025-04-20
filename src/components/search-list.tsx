@@ -17,10 +17,9 @@ export function SearchList() {
   const router = useRouter()
   const pathname = usePathname()
   const currentId = pathname.split("/")[1] // Get the ID from the URL
-  const { toast } = useToast()
 
   // Query to get all searches
-  const { data: searches, refetch: refetchSearches } = api.search.getAll.useQuery(undefined, {
+  const { data: searches } = api.search.getAll.useQuery(undefined, {
     refetchOnWindowFocus: false,
   })
 
