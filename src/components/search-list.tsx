@@ -25,22 +25,22 @@ export function SearchList() {
   })
 
   // Mutation to delete a search
-  const deleteSearch = api.search.delete.useMutation({
-    onSuccess: async () => {
-      await refetchSearches()
-      toast({
-        title: "Success",
-        description: "Search deleted successfully",
-      })
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      })
-    },
-  })
+  // const deleteSearch = api.search.delete.useMutation({
+  //   onSuccess: async () => {
+  //     await refetchSearches()
+  //     toast({
+  //       title: "Success",
+  //       description: "Search deleted successfully",
+  //     })
+  //   },
+  //   onError: (error) => {
+  //     toast({
+  //       title: "Error",
+  //       description: error.message,
+  //       variant: "destructive",
+  //     })
+  //   },
+  // })
 
   // Handler for deleting a search
   // const _handleDeleteSearch = (id: string) => {

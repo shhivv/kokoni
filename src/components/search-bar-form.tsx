@@ -129,7 +129,7 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
-                          form.handleSubmit(onSubmit)();
+                          void form.handleSubmit(onSubmit)();
                         }
                       }}
                       onFocus={async () => {

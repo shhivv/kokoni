@@ -21,18 +21,10 @@ import { useRouter, useParams } from "next/navigation";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
-import {
   BarChart3,
   Globe,
-  Info,
 } from "lucide-react";
+import type { Session } from "next-auth"
 
 // Define the node type
 interface FlowNode extends Node {
@@ -192,7 +184,7 @@ export const Flow: React.FC = () => {
 
       {/* Debug Panel */}
       {selectedNodes.length > 0 && (
-        <div className="absolute top-4 right-4 bg-card border border-border rounded-lg p-4 max-w-xs shadow-lg">
+        <div className="absolute top-4 right-4 bg-card  rounded-lg p-4 max-w-xs shadow-lg">
           <h3 className="text-sm font-medium text-foreground">Selected Nodes:</h3>
           <button
             onClick={clearSelection}
@@ -212,91 +204,67 @@ export const Flow: React.FC = () => {
 
       {/* Prompt Input */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-[600px]">
-        <div className="relative flex flex-col gap-2">
-          <div className="flex items-center gap-2 justify-center">
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn(
-                "text-muted-foreground hover:text-foreground transition-colors",
-                prompt.includes("[STATS]") && "text-foreground border-primary"
-              )}
-              onClick={() => setPrompt(prev => prev.includes("[STATS]") ? prev.replace("[STATS]", "").trim() : "[STATS] " + prev)}
-            >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Statistics
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn(
-                "text-muted-foreground hover:text-foreground transition-colors",
-                prompt.includes("[WEB]") && "text-foreground border-primary"
-              )}
-              onClick={() => setPrompt(prev => prev.includes("[WEB]") ? prev.replace("[WEB]", "").trim() : "[WEB] " + prev)}
-            >
-              <Globe className="w-4 h-4 mr-2" />
-              Web Search
-            </Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-muted-foreground hover:text-foreground">
-                  <Info className="w-4 h-4 mr-2" />
-                  Additional Info
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Additional Information</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">Add specific requirements or preferences for the report:</p>
-                  <textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    className="w-full h-32 px-4 py-3 text-sm text-foreground bg-card border border-border rounded-lg 
-                             placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary 
-                             focus:border-transparent resize-none"
-                    placeholder="E.g., Focus on recent developments, specific time period, particular aspects..."
-                  />
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
+        <div className="relative">
           <div className="relative">
             <input
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Add additional instructions for the report..."
-              className="w-full h-12 px-4 text-sm text-foreground bg-card border border-border
+              className="w-full h-12 px-4 pr-[220px] text-sm text-foreground bg-card border border-border
                        rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 
                        focus:ring-primary focus:border-transparent"
             />
-            <Button
-              onClick={() => {
-                generateReport.mutate({
-                  originalPrompt: search?.name ?? "",
-                  keywords: selectedNodes.map(n => n.data.label),
-                  prompt,
-                  searchId: params.slug,
-                });
-              }}
-              disabled={selectedNodes.length === 0 || generateReport.isPending}
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 text-sm font-medium text-card-foreground 
-                       bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 
-                       focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
-                       disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {generateReport.isPending ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-background/20 border-t-background rounded-full animate-spin" />
-                  <span>Generating...</span>
-                </div>
-              ) : (
-                "Generate Report"
-              )}
-            </Button>
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-8 w-8",
+                  prompt.includes("[STATS]") && "text-primary bg-accent"
+                )}
+                onClick={() => setPrompt(prev => prev.includes("[STATS]") ? prev.replace("[STATS]", "").trim() : "[STATS] " + prev)}
+              >
+                <BarChart3 className="w-4 h-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-8 w-8",
+                  prompt.includes("[WEB]") && "text-primary bg-accent"
+                )}
+                onClick={() => setPrompt(prev => prev.includes("[WEB]") ? prev.replace("[WEB]", "").trim() : "[WEB] " + prev)}
+              >
+                <Globe className="w-4 h-4" />
+              </Button>
+              <div className="mx-2 h-8 w-px bg-border" />
+              <Button
+                onClick={() => {
+                  generateReport.mutate({
+                    originalPrompt: search?.name ?? "",
+                    keywords: selectedNodes.map(n => n.data.label),
+                    prompt,
+                    searchId: params.slug,
+                  });
+                }}
+                disabled={selectedNodes.length === 0 || generateReport.isPending}
+                className="h-8 px-4 text-sm font-medium text-card-foreground 
+                         bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 
+                         focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
+                         disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {generateReport.isPending ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-background/20 border-t-background rounded-full animate-spin" />
+                    <span>Generating...</span>
+                  </div>
+                ) : (
+                  "Generate Report"
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

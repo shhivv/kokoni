@@ -14,7 +14,7 @@ export async function AppSidebar() {
 
   return (
     <Sidebar className="border-r-muted-foreground/10">
-      <SidebarHeader className="pt-8 pb-4 px-4">
+      <SidebarHeader className="pt-8  px-4">
         <AnimatedHeader />
       </SidebarHeader>
 
