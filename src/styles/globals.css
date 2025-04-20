@@ -115,7 +115,7 @@
 }
 
 .image-background-main {
-  background-image: linear-gradient(to left, rgba(0,0,0,0) 75%, rgba(18, 18, 18,1) ), url("../../public/background.webp"); /* fade to background */
+  background-image: linear-gradient(to left, rgba(0,0,0,0) 75%, rgba(20, 20, 20, 1) ), url("../../public/background.webp"); /* fade to background */
   background-size: cover;
 }
 

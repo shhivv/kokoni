@@ -184,7 +184,7 @@ export const Flow: React.FC = () => {
 
       {/* Debug Panel */}
       {selectedNodes.length > 0 && (
-        <div className="absolute top-4 right-4 bg-card  rounded-lg p-4 max-w-xs shadow-lg">
+        <div className="absolute top-4 right-4 bg-muted  rounded-lg p-4 max-w-xs shadow-lg">
           <h3 className="text-sm font-medium text-foreground">Selected Nodes:</h3>
           <button
             onClick={clearSelection}
