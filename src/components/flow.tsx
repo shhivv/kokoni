@@ -41,9 +41,9 @@ const edgeTypes = {
 
 // Custom node styles
 const nodeStyles = {
-  background: 'hsl(var(--card))',
-  color: 'hsl(var(--foreground))',
-  border: '1px solid hsl(var(--border))',
+  background: 'hsl(var(--muted))',
+  color: 'hsl(var(--muted-foreground))',
+  border: '1px solid hsl(var(--neutral-border))',
   borderRadius: '0.5rem',
   padding: '0.5rem 1rem',
   transition: 'border 0.2s ease, box-shadow 0.2s ease',
@@ -51,7 +51,7 @@ const nodeStyles = {
 
 const selectedNodeStyles = {
   ...nodeStyles,
-  border: '2px solid hsl(var(--primary))',
+  border: '1px solid hsl(var(--primary))',
   boxShadow: '0 0 0 2px hsla(var(--primary), 0.5)',
 };
 
@@ -63,8 +63,8 @@ const defaultEdgeOptions = {
   },
   style: {
     stroke: 'hsl(var(--border))',
-    strokeDasharray: '5,5',
-    strokeWidth: 1.5,
+    strokeDasharray: '4,4',
+    strokeWidth: 1,
   },
 };
 
@@ -154,7 +154,7 @@ export const Flow: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full h-full bg-background floating-edges relative">
+    <div className="w-full h-full bg-card floating-edges relative">
       <ReactFlow
         nodes={nodes}
         edges={edges}

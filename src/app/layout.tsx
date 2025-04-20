@@ -25,10 +25,10 @@ export default function RootLayout({
     <html lang="en" className={`${newsreader.variable} ${figtree.variable} ${inter.variable} ${rdh.variable} dark antialiased font-sans`}>
       <body>
         <TRPCReactProvider>
-          <SidebarProvider defaultOpen={false}>
+          <SidebarProvider defaultOpen={false} className="bg-card">
             <AppSidebar />
               <SidebarTrigger className="p-4 m-2"/>
-              <div className="flex min-h-screen flex-col items-center justify-center bg-background w-full text-foreground">
+              <div className="flex min-h-screen flex-col items-center justify-center bg-card w-full text-foreground">
               {children}
               <Toaster/>
               </div>

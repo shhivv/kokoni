@@ -22,6 +22,7 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%;
+    --neutral-border: 0 0 20%;
     --input: 0 0% 89.8%;
     --ring: 0 0% 3.9%;
     --chart-1: 12 76% 61%;
@@ -29,8 +30,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem
-  ;
+    --radius: 0.5rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -38,12 +38,16 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%}
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    --scrollbar-size: 8px;
+    --scrollbar-track: 0 0% 94%;
+    --scrollbar-thumb: 0 0% 80%;
+  }
   .dark {
     --background: 0 0% 7%;  /* Deep black */
     --foreground: 0 0% 98%;  /* Clean white */
     
-    --card: 0 0% 9%;  /* Slightly lighter black */
+    --card: 0 0% 8%;  /* Slightly lighter black */
     --card-foreground: 0 0% 98%;
     
     --popover: 0 0% 9%;
@@ -65,6 +69,7 @@
     --destructive-foreground: 0 0% 98%;
     
     --border: 160 40% 15%;  /* Dark emerald border */
+    --neutral-border: 0 0 20%;
     --input: 0 0% 12%;
     --ring: 160 84% 39%;  /* Emerald ring */
     
@@ -85,6 +90,8 @@
     --sidebar-border: 160 40% 15%;
     --sidebar-ring: 160 84% 39%;
     --sidebar-width: 0.5rem;
+    --scrollbar-track: 0 0% 9%;
+    --scrollbar-thumb: 0 0% 15%;
   }
 }
 @layer base {
@@ -111,3 +118,32 @@
   background-image: linear-gradient(to left, rgba(0,0,0,0) 75%, rgba(18, 18, 18,1) ), url("../../public/background.webp"); /* fade to background */
   background-size: cover;
 }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--scrollbar-track));
+  border-radius: calc(var(--scrollbar-size) / 2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--scrollbar-thumb));
+  border-radius: calc(var(--scrollbar-size) / 2);
+  border: 2px solid hsl(var(--scrollbar-track));
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--scrollbar-thumb)) hsl(var(--scrollbar-track));
+}
+

@@ -37,10 +37,10 @@ export function Report({ searchId }: ReportProps) {
 
   return (
     <div className={cn(
-      "h-full overflow-y-auto px-4 py-6",
+      "h-full overflow-y-auto px-4 py-6 font-label flex flex-col items-center",
       "prose dark:prose-invert max-w-none",
-      "prose-h1:text-2xl prose-h1:font-semibold prose-h1:mt-0",
-      "prose-h2:text-xl prose-h2:font-semibold",
+      "prose-h1:text-2xl prose-h1:font-semibold prose-h1:mt-0 prose-h1:font-heading",
+      "prose-h2:text-xl prose-h2:font-medium prose-h1:font-heading",
       "prose-p:text-muted-foreground",
       "prose-li:text-muted-foreground",
       "prose-strong:text-foreground",
@@ -49,13 +49,16 @@ export function Report({ searchId }: ReportProps) {
       "prose-blockquote:border-l-border prose-blockquote:text-muted-foreground",
       "prose-a:text-primary prose-a:no-underline hover:prose-a:underline"
     )}>
-      <h1>{search.name}</h1>
+      <div className="w-1/2">
+
+      <p className="text-sm">{search.name}</p>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
       >
         {search.Report.contents}
       </ReactMarkdown>
+      </div>
     </div>
   );
 } 

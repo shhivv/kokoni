@@ -17,7 +17,7 @@ export function SearchTabs({ searchId }: { searchId: string }) {
   };
 
   return (
-    <Tabs value={currentTab} onValueChange={onTabChange} className="h-full flex flex-col">
+    <Tabs value={currentTab} onValueChange={onTabChange} className="h-full flex flex-col bg-card">
       <div>
         <TabsList className="m-4">
           <TabsTrigger value="knowledge-map">Knowledge Map</TabsTrigger>
