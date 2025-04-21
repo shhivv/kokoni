@@ -62,6 +62,11 @@ export function SidebarActions({ session }: SidebarActionsProps) {
                     Sign Out
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem className="text-muted-foreground hover:text-foreground focus:text-foreground">
+                  <Link href="/about" className="w-full">
+                      About
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
