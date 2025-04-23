@@ -5,6 +5,7 @@ import Link from "next/link"
 import { cn } from "~/lib/utils"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "~/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuItem } from "~/components/ui/sidebar"
+import { Button } from "./ui/button"
 
 
 interface SidebarActionsProps {
@@ -37,6 +38,15 @@ export function SidebarActions({ session }: SidebarActionsProps) {
       ) : null} */}
 
       <SidebarMenu>
+        <SidebarMenuItem>
+        <Button
+                asChild
+                className="text-muted-foreground font-label text-xs"
+                variant="link"
+              >
+  <Link href="https://github.com/shhivv/kokoni">GitHub</Link>
+</Button>
+        </SidebarMenuItem>
         <SidebarMenuItem>
           {session ? (
             <DropdownMenu>
