@@ -4,7 +4,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
-import { groq } from "@ai-sdk/groq";
+import { xai } from "@ai-sdk/xai";
 import { generateObject } from "ai";
 import { tavily } from "@tavily/core";
 import { env } from "~/env";
@@ -146,7 +146,7 @@ Example format (DO NOT copy this exact structure, create an appropriate one for 
 
 IMPORTANT: Return only the JSON structure without any explanations, comments or code blocks. Use proper capitalization and spaces in all labels.`;
       const response = await generateObject({
-        model: groq("gemma2-9b-it"),
+        model: xai("grok-3-mini"),
         schema: z.object({
           knowledgeMap: z.record(z.any()),
         }),

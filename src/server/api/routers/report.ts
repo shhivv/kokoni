@@ -6,7 +6,7 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from "~/server/api/trpc";
-import { groq } from "@ai-sdk/groq";
+import { xai } from "@ai-sdk/xai";
 const tvly = tavily({ apiKey: env.TAVILY_API_KEY });
 
 export const reportRouter = createTRPCRouter({
@@ -44,7 +44,7 @@ export const reportRouter = createTRPCRouter({
       ].filter(Boolean).join('\n');
 
       const { textStream } = streamText({
-        model: groq("gemma2-9b-it"),
+        model: xai("grok-3-mini"),
         prompt: `Create a detailed report based on the following research:
 QUESTION: ${input.originalPrompt}
 
