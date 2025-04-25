@@ -146,6 +146,7 @@ Example format (DO NOT copy this exact structure, create an appropriate one for 
 
 IMPORTANT: Return only the JSON structure without any explanations, comments or code blocks. Use proper capitalization and spaces in all labels.`;
       const response = await generateObject({
+        // @ts-expect-error model xai
         model: xai("grok-3-mini"),
         schema: z.object({
           knowledgeMap: z.record(z.any()),

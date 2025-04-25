@@ -44,6 +44,7 @@ export const reportRouter = createTRPCRouter({
       ].filter(Boolean).join('\n');
 
       const { textStream } = streamText({
+        // @ts-expect-error model xai
         model: xai("grok-3-mini"),
         prompt: `Create a detailed report based on the following research:
 QUESTION: ${input.originalPrompt}
