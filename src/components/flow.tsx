@@ -80,6 +80,8 @@ export const Flow: React.FC = () => {
   const { toast } = useToast();
   const router = useRouter();
   const utils = api.useUtils();
+  const [includeStats, setIncludeStats] = useState(false);
+  const [includeWeb, setIncludeWeb] = useState(false);
 
   // Update nodes when search data changes
   useEffect(() => {
@@ -220,9 +222,9 @@ export const Flow: React.FC = () => {
                 size="icon"
                 className={cn(
                   "h-8 w-8",
-                  prompt.includes("[STATS]") && "text-primary bg-accent"
+                  includeStats && "text-primary bg-accent"
                 )}
-                onClick={() => setPrompt(prev => prev.includes("[STATS]") ? prev.replace("[STATS]", "").trim() : "[STATS] " + prev)}
+                onClick={() => setIncludeStats(prev => !prev)}
               >
                 <BarChart3 className="w-4 h-4" />
               </Button>
@@ -232,9 +234,9 @@ export const Flow: React.FC = () => {
                 size="icon"
                 className={cn(
                   "h-8 w-8",
-                  prompt.includes("[WEB]") && "text-primary bg-accent"
+                  includeWeb && "text-primary bg-accent"
                 )}
-                onClick={() => setPrompt(prev => prev.includes("[WEB]") ? prev.replace("[WEB]", "").trim() : "[WEB] " + prev)}
+                onClick={() => setIncludeWeb(prev => !prev)}
               >
                 <Globe className="w-4 h-4" />
               </Button>
@@ -246,6 +248,8 @@ export const Flow: React.FC = () => {
                     keywords: selectedNodes.map(n => n.data.label),
                     prompt,
                     searchId: params.slug,
+                    includeStats,
+                    includeWeb,
                   });
                 }}
                 disabled={selectedNodes.length === 0 || generateReport.isPending}

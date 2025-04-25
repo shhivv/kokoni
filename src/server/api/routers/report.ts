@@ -16,6 +16,8 @@ export const reportRouter = createTRPCRouter({
       keywords: z.array(z.string()),
       prompt: z.string().optional(),
       searchId: z.string(),
+      includeStats: z.boolean().default(false),
+      includeWeb: z.boolean().default(false),
     }))
     .mutation(async ({ ctx, input }) => {
       const searchPromises = input.keywords.map(keyword => 
@@ -34,6 +36,13 @@ export const reportRouter = createTRPCRouter({
           .join('\n\n') ?? ''
       }));
 
+      // Construct additional instructions based on flags
+      const additionalInstructions = [
+        input.prompt ?? '',
+        input.includeStats ? 'Include statistical analysis and data-driven insights where possible.' : '',
+        input.includeWeb ? 'Focus on web-specific information and online trends.' : ''
+      ].filter(Boolean).join('\n');
+
       const { textStream } = streamText({
         model: groq("gemma2-9b-it"),
         prompt: `Create a detailed report based on the following research:
@@ -42,7 +51,7 @@ QUESTION: ${input.originalPrompt}
 RESEARCH:
 ${compiledResults.map(r => `## ${r.keyword}\n${r.content}`).join('\n\n')}
 
-Additional instructions: ${input.prompt ?? ''}
+Additional instructions: ${additionalInstructions}
 
 Requirements:
 1. Use Markdown format
