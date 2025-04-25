@@ -72,16 +72,11 @@ export function SidebarActions({ session }: SidebarActionsProps) {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[--radix-popper-anchor-width] bg-backgroun"
+                className="w-[--radix-popper-anchor-width] bg-background"
               >
                 <DropdownMenuItem className="text-muted-foreground hover:text-foreground focus:text-foreground">
                   <Link href="/api/auth/signout" className="w-full">
                     Sign Out
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-muted-foreground hover:text-foreground focus:text-foreground">
-                  <Link href="/about" className="w-full">
-                    About
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>

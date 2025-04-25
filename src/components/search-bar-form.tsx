@@ -85,7 +85,7 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
 
   const getFontSize = () => {
     const baseSize = 64 // Starting font size (increased from 48)
-    const minSize = 36 // Minimum font size (increased from 24)
+    const minSize = 40 // Minimum font size (increased from 24)
     const maxLength = 20 // Length at which font size starts decreasing
     
     if (inputValue.length <= maxLength) {
@@ -110,7 +110,7 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
                   <div className="w-full h-full flex items-center justify-center">
                     <Textarea
                     autoFocus
-                      className="w-full h-full font-serif focus:outline-none border-0 outline-0 rounded-none focus-visible:ring-0 hover:border-muted-foreground focus:border-foreground transition-all duration-300 bg-transparent text-foreground placeholder:text-muted-foreground/50 text-center resize-none"
+                      className="w-full h-full font-serif outline-none border-0 rounded-none ring-0 ring-offset-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:border-0 bg-transparent text-foreground placeholder:text-muted-foreground/50 text-center resize-none"
                       autoComplete="false"
                       style={{ 
                         fontSize: `${getFontSize()}px`,

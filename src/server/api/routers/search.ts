@@ -145,7 +145,6 @@ Example format (DO NOT copy this exact structure, create an appropriate one for 
 }
 
 IMPORTANT: Return only the JSON structure without any explanations, comments or code blocks. Use proper capitalization and spaces in all labels.`;
-      console.log(structurePrompt);
       const response = await generateObject({
         model: groq("gemma2-9b-it"),
         schema: z.object({
