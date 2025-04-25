@@ -11,7 +11,7 @@ Research shouldn't be difficult
 
 ![image](./.github/assets/readme_screenshot.png)
 
-Kokoni is an open-source research assistant powered by AI artificial intelligence that helps you pick and organize topics to do comprehensive research on anything you want to learn about.
+Kokoni is an open-source research assistant powered by AI that helps you pick and organize topics to do comprehensive research on anything you want to learn about.
  
 
 ### License

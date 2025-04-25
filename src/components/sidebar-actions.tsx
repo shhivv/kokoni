@@ -39,13 +39,20 @@ export function SidebarActions({ session }: SidebarActionsProps) {
 
       <SidebarMenu>
         <SidebarMenuItem>
-        <Button
-                asChild
-                className="text-muted-foreground font-label text-xs"
-                variant="link"
-              >
-  <Link href="https://github.com/shhivv/kokoni">GitHub</Link>
-</Button>
+          <Button
+            asChild
+            className="text-muted-foreground font-label text-xs"
+            variant="link"
+          >
+            <Link href="/about">Learn more</Link>
+          </Button>       <Button
+            asChild
+            className="text-muted-foreground font-label text-xs"
+            variant="link"
+          >
+            <Link href="https://github.com/shhivv/kokoni">GitHub</Link>
+          </Button>
+
         </SidebarMenuItem>
         <SidebarMenuItem>
           {session ? (
@@ -74,19 +81,19 @@ export function SidebarActions({ session }: SidebarActionsProps) {
                 </DropdownMenuItem>
                 <DropdownMenuItem className="text-muted-foreground hover:text-foreground focus:text-foreground">
                   <Link href="/about" className="w-full">
-                      About
+                    About
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link 
-              href="/api/auth/signin" 
+            <Link
+              href="/api/auth/signin"
               className={cn(
-                    "w-full px-3 py-4 rounded-md flex items-center",
-                    "text-sm text-muted-foreground hover:text-foreground",
-                    "bg-muted hover:bg-accent",
-                    "transition-all duration-200"
+                "w-full px-3 py-4 rounded-md flex items-center",
+                "text-sm text-muted-foreground hover:text-foreground",
+                "bg-muted hover:bg-accent",
+                "transition-all duration-200"
               )}
             >
               <User2 className="w-4 h-4" />
