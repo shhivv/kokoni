@@ -10,17 +10,22 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const search = await api.search.getById({ id: slug })
-  
-  return {
-    title: search.name,
+  try {
+    const search = await api.search.getById({ id: slug })
+    return {
+      title: search.name,
+    }
+  } catch (error) {
+    return {
+      title: "Loading...",
+    }
   }
 }
 
 export default async function Page({ params }: PageProps) {
-
   const session = await auth()
   const { slug } = await params
+  
   if (!session) {
     redirect("/api/auth/signin")
   }
@@ -29,5 +34,5 @@ export default async function Page({ params }: PageProps) {
     <main className="h-[calc(100vh-4rem)] w-full">
       <SearchTabs searchId={slug} />
     </main>
-  );
+  )
 }

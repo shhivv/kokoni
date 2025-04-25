@@ -51,13 +51,20 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
     onSuccess: async (data) => {
       toast({
         title: "Search created",
-        description: "Redirecting to your new search...",
+        description: "Redirecting..."
       })
       form.reset()
       await utils.search.getAll.invalidate()
+      // Navigate to the actual search page after creation
       router.push(`/${data.id}`)
     },
     onError: (error) => {
+      // Hide loading overlay on error
+      const loadingOverlay = document.getElementById('loading-overlay')
+      if (loadingOverlay) {
+        loadingOverlay.style.display = 'none'
+      }
+      
       toast({
         title: "Error",
         description: error.message,
@@ -72,10 +79,40 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
       return
     }
     
-    createSearch.mutate({
-      name: data.query,
-      additionalInstruction: "",
-    })
+    // Validate input
+    if (!data.query.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a search query",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    // Show loading overlay
+    const loadingOverlay = document.getElementById('loading-overlay')
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'flex'
+    }
+    
+    try {
+      // Create the search
+      createSearch.mutate({
+        name: data.query.trim(),
+        additionalInstruction: "",
+      })
+    } catch (error) {
+      // Hide loading overlay on error
+      if (loadingOverlay) {
+        loadingOverlay.style.display = 'none'
+      }
+      
+      toast({
+        title: "Error",
+        description: "Failed to create search. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
