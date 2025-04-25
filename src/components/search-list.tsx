@@ -9,18 +9,21 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSkeleton,
 } from "~/components/ui/sidebar"
 import { api } from "~/trpc/react"
 import { useToast } from "~/hooks/use-toast"
+import { useState, useCallback } from "react"
 
 export function SearchList() {
   const router = useRouter()
   const pathname = usePathname()
-  const currentId = pathname.split("/")[1] // Get the ID from the URL
+  const currentId = pathname.split("/").pop()
+  const [isNavigating, setIsNavigating] = useState(false)
 
-  // Query to get all searches
-  const { data: searches } = api.search.getAll.useQuery(undefined, {
+  const { data: searches, isLoading } = api.search.getAll.useQuery(undefined, {
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false
   })
 
   // Mutation to delete a search
@@ -46,6 +49,30 @@ export function SearchList() {
   //   deleteSearch.mutate({ id })
   // }
 
+  const handleNavigate = useCallback(async (id: string) => {
+    try {
+      setIsNavigating(true)
+      await router.push(`/${id}`)
+    } finally {
+      setIsNavigating(false)
+    }
+  }, [router])
+
+  if (isLoading) {
+    return (
+      <SidebarGroup>
+        <SidebarGroupLabel className="font-label">Your Searches</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SidebarMenuSkeleton key={i} showIcon />
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    )
+  }
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel className="font-label">Your Searches</SidebarGroupLabel>
@@ -56,7 +83,8 @@ export function SearchList() {
               <SidebarMenuButton
                 asChild
                 isActive={search.id === currentId}
-                onClick={() => router.push(`/${search.id}`)}
+                onClick={() => handleNavigate(search.id)}
+                disabled={isNavigating}
               >
                 <button className="py-3">
                   <Search className="h-4 w-4 text-muted-foreground" />

@@ -8,13 +8,13 @@ import { auth } from "~/server/auth"
 import { SearchList } from "~/components/search-list"
 import { SidebarHeader as AnimatedHeader } from "~/components/sidebar-header"
 import { SidebarActions } from "~/components/sidebar-actions"
+import { Suspense } from "react"
 
-export async function AppSidebar() {
-  const session = await auth()
-
+// Create a client component wrapper for the session-dependent content
+function SidebarContent_({ session }: { session: any }) {
   return (
-    <Sidebar className="border-r-neutralborder/30">
-      <SidebarHeader className="pt-8  px-4">
+    <>
+      <SidebarHeader className="pt-8 px-4">
         <AnimatedHeader />
       </SidebarHeader>
 
@@ -31,6 +31,18 @@ export async function AppSidebar() {
           }
         />
       </SidebarFooter>
+    </>
+  )
+}
+
+export async function AppSidebar() {
+  const session = await auth()
+
+  return (
+    <Sidebar className="border-r-neutralborder/30">
+      <Suspense fallback={<div className="p-4">Loading...</div>}>
+        <SidebarContent_ session={session} />
+      </Suspense>
     </Sidebar>
   )
 }
