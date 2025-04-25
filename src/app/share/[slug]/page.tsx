@@ -1,6 +1,6 @@
-import { SearchTabs } from "~/components/search-tabs"
-import { type Metadata } from "next"
 import { api } from "~/trpc/server"
+import { ShareReport } from "~/components/share-report"
+import type { Metadata } from "next"
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -19,8 +19,8 @@ export default async function Page({ params }: PageProps) {
   const { slug } = await params
 
   return (
-    <main className="h-[calc(100vh-4r em)] w-full bg-background">
-      <SearchTabs searchId={slug} />
+    <main className="h-[calc(100vh)] w-full bg-background">
+      <ShareReport searchId={slug} />
     </main>
   );
 }

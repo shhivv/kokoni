@@ -222,9 +222,9 @@ export const Flow: React.FC = () => {
                 size="icon"
                 className={cn(
                   "h-8 w-8",
-                  includeStats && "text-primary bg-accent"
+                  prompt.includes("[STATS]") && "text-primary bg-accent"
                 )}
-                onClick={() => setIncludeStats(prev => !prev)}
+                onClick={() => setPrompt(prev => prev.includes("[STATS]") ? prev.replace("[STATS]", "").trim() : "[STATS] " + prev)}
               >
                 <BarChart3 className="w-4 h-4" />
               </Button>
@@ -234,9 +234,9 @@ export const Flow: React.FC = () => {
                 size="icon"
                 className={cn(
                   "h-8 w-8",
-                  includeWeb && "text-primary bg-accent"
+                  prompt.includes("[WEB]") && "text-primary bg-accent"
                 )}
-                onClick={() => setIncludeWeb(prev => !prev)}
+                onClick={() => setPrompt(prev => prev.includes("[WEB]") ? prev.replace("[WEB]", "").trim() : "[WEB] " + prev)}
               >
                 <Globe className="w-4 h-4" />
               </Button>
@@ -248,8 +248,6 @@ export const Flow: React.FC = () => {
                     keywords: selectedNodes.map(n => n.data.label),
                     prompt,
                     searchId: params.slug,
-                    includeStats,
-                    includeWeb,
                   });
                 }}
                 disabled={selectedNodes.length === 0 || generateReport.isPending}
