@@ -13,7 +13,7 @@ import {
 } from "~/components/ui/sidebar"
 import { api } from "~/trpc/react"
 import { useToast } from "~/hooks/use-toast"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 
 export function SearchList() {
   const router = useRouter()
@@ -23,8 +23,18 @@ export function SearchList() {
 
   const { data: searches, isLoading } = api.search.getAll.useQuery(undefined, {
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false
+    refetchOnReconnect: false,
+    staleTime: 30000 // Cache data for 30 seconds
   })
+
+  // Prefetch all search routes
+  useEffect(() => {
+    if (searches) {
+      searches.forEach(search => {
+        router.prefetch(`/${search.id}`)
+      })
+    }
+  }, [searches, router])
 
   // Mutation to delete a search
   // const deleteSearch = api.search.delete.useMutation({
@@ -50,13 +60,16 @@ export function SearchList() {
   // }
 
   const handleNavigate = useCallback(async (id: string) => {
+    if (id === currentId) return // Don't navigate if already on the page
+    
     try {
       setIsNavigating(true)
-      await router.push(`/${id}`)
+      router.push(`/${id}`)
     } finally {
-      setIsNavigating(false)
+      // Add a small delay before enabling navigation again to prevent double-clicks
+      setTimeout(() => setIsNavigating(false), 300)
     }
-  }, [router])
+  }, [router, currentId])
 
   if (isLoading) {
     return (
@@ -86,7 +99,10 @@ export function SearchList() {
                 onClick={() => handleNavigate(search.id)}
                 disabled={isNavigating}
               >
-                <button className="py-3">
+                <button 
+                  className="py-3"
+                  onMouseEnter={() => router.prefetch(`/${search.id}`)}
+                >
                   <Search className="h-4 w-4 text-muted-foreground" />
                   <span>{search.name}</span>
                 </button>
