@@ -7,7 +7,6 @@ import { TRPCReactProvider } from "~/trpc/react";
 import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import { AppSidebar } from "~/components/app-sidebar";
 import { Toaster } from "~/components/ui/toaster";
-
 export const metadata: Metadata = {
   title: "Kokoni",
   description: "Personalized deep-research should be easy",
@@ -28,14 +27,13 @@ export default function RootLayout({
         <TRPCReactProvider>
           <SidebarProvider defaultOpen={false} className="bg-card">
             <AppSidebar />
-            <main className="flex-1">
               <SidebarTrigger className="p-4 m-2"/>
               <div className="flex min-h-screen flex-col items-center justify-center bg-card w-full text-foreground">
-                {children}
+              {children}
+              <Toaster/>
               </div>
-            </main>
-            <Toaster/>
           </SidebarProvider>
+
         </TRPCReactProvider>
       </body>
     </html>
