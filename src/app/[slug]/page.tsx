@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   } catch (error) {
     return {
-      title: "Loading...",
+      title: String(error),
     }
   }
 }

@@ -73,7 +73,7 @@ export default async function Page() {
             <div className="space-y-2">
               <h3 className="text-lg font-semibold">1. Choose Your Topic</h3>
               <p className="text-muted-foreground">
-                Start by entering a topic you're interested in learning about. Kokoni will help you
+                Start by entering a topic you&apos;re interested in learning about. Kokoni will help you
                 break it down into manageable subtopics and learning objectives.
               </p>
             </div>
