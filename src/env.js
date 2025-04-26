@@ -15,6 +15,7 @@ export const env = createEnv({
     TAVILY_API_KEY: z.string().min(1),
     GROQ_API_KEY: z.string().min(1),
     OPENROUTER_API_KEY: z.string().min(1),
+    XAI_API_KEY: z.string().min(1),
   },
 
   /**
@@ -39,6 +40,7 @@ export const env = createEnv({
     TAVILY_API_KEY: process.env.TAVILY_API_KEY,
     GROQ_API_KEY: process.env.GROQ_API_KEY,
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+    XAI_API_KEY: process.env.XAI_API_KEY
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

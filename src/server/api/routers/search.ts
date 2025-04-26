@@ -110,7 +110,7 @@ export const searchRouter = createTRPCRouter({
       const structurePrompt = `Create a hierarchical knowledge map structure as a JSON object for the topic: "${input.name}" 
 
 Here are some key points to consider:
-${search.results.slice(0, 2).map(r => r.content).join("\n")}
+${search.results.map(r => r.content).join("\n")}
 
 The structure should be nested with related concepts grouped together. Focus on key concepts, subtopics, and their relationships.
 
@@ -127,24 +127,62 @@ Requirements:
 
 Example format (DO NOT copy this exact structure, create an appropriate one for the topic):
 {
-  "mainTopic": "${input.name}",
-  "keyComponents": [
+  "Industrial Revolution": [
+    "1760-1840",
+    "Great Britain",
     {
-      "aspects": ["Aspect One", "Aspect Two"],
-      "relatedConcepts": ["Related Concept", "Another Concept"]
-    }
-  ],
-  "subtopics": {
-    "Primary Subtopic": {
-      "elements": ["Element One", "Element Two"]
+      "Key Invention": [
+        "Steam engine",
+        "Power loom",
+        "Cotton gin",
+        {
+          "Transportation": [
+            "Railway",
+            "Steamboat",
+            "Locomotive"
+          ]
+        }
+      ]
     },
-    "Secondary Subtopic": {
-      "elements": ["Element One", "Element Two"]
-    }
-  }
+    {
+      "Social Changes": [
+        "Urbanization",
+        "Factory system",
+        "Working class",
+        {
+          "Living Conditions": [
+            "Tenements",
+            "Pollution",
+            "Public health issues"
+          ]
+        }
+      ]
+    },
+    {
+      "Economic Impact": [
+        "Mass production",
+        "Capitalism",
+        "Global trade",
+        {
+          "resources": [
+            "Coal",
+            "Iron",
+            "Steel"
+          ]
+        }
+      ]
+    },
+    [
+      "Second Industrial Revolution",
+      "1870-1914",
+      "Electricity",
+      "Oil"
+    ]
+  ]
 }
 
 IMPORTANT: Return only the JSON structure without any explanations, comments or code blocks. Use proper capitalization and spaces in all labels.`;
+      const startTime = performance.now();
       const response = await generateObject({
         // @ts-expect-error model xai
         model: xai("grok-3-mini"),
@@ -153,6 +191,8 @@ IMPORTANT: Return only the JSON structure without any explanations, comments or 
         }),
         prompt: structurePrompt,
       });
+      const endTime = performance.now();
+      console.log(`generateObject call took ${(endTime - startTime) / 1000} seconds`);
 
       const knowledgeMap = response.object.knowledgeMap;
 
