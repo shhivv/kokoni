@@ -13,21 +13,20 @@ const tvly = tavily({ apiKey: env.TAVILY_API_KEY });
 
 export const searchRouter = createTRPCRouter({
   // GET /searches
-  getAll: protectedProcedure
-    .query(async ({ ctx }) => {
-      return await ctx.db.search.findMany({
-        where: {
-          createdById: ctx.session.user.id,
-        },
-        include: {
-          KnowledgeMap: true,
-          Report: true,
-        },
-        orderBy: {
-          updatedAt: 'desc',
-        },
-      });
-    }),
+  getAll: protectedProcedure.query(async ({ ctx }) => {
+    return await ctx.db.search.findMany({
+      where: {
+        createdById: ctx.session.user.id,
+      },
+      include: {
+        KnowledgeMap: true,
+        Report: true,
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
+  }),
 
   // GET /search/<id> (protected)
   getById: protectedProcedure
@@ -84,12 +83,13 @@ export const searchRouter = createTRPCRouter({
 
   // POST /search
   create: protectedProcedure
-    .input(z.object({
-      name: z.string().min(1),
-      additionalInstruction: z.string().default(""),
-    }))
+    .input(
+      z.object({
+        name: z.string().min(1),
+        additionalInstruction: z.string().default(""),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
-
       const userSearches = await ctx.db.search.count({
         where: {
           createdById: ctx.session.user.id,
@@ -110,7 +110,7 @@ export const searchRouter = createTRPCRouter({
       const structurePrompt = `Create a hierarchical knowledge map structure as a JSON object for the topic: "${input.name}" 
 
 Here are some key points to consider:
-${search.results.map(r => r.content).join("\n")}
+${search.results.map((r) => r.content).join("\n")}
 
 The structure should be nested with related concepts grouped together. Focus on key concepts, subtopics, and their relationships.
 
@@ -192,7 +192,9 @@ IMPORTANT: Return only the JSON structure without any explanations, comments or 
         prompt: structurePrompt,
       });
       const endTime = performance.now();
-      console.log(`generateObject call took ${(endTime - startTime) / 1000} seconds`);
+      console.log(
+        `generateObject call took ${(endTime - startTime) / 1000} seconds`,
+      );
 
       const knowledgeMap = response.object.knowledgeMap;
 
@@ -246,13 +248,15 @@ IMPORTANT: Return only the JSON structure without any explanations, comments or 
 
   // PUT /search/<id>
   update: protectedProcedure
-    .input(z.object({
-      id: z.string(),
-      name: z.string().optional(),
-      additionalInstruction: z.string().optional(),
-      knowledgeMap: z.record(z.any()).optional(),
-      report: z.record(z.any()).optional(),
-    }))
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string().optional(),
+        additionalInstruction: z.string().optional(),
+        knowledgeMap: z.record(z.any()).optional(),
+        report: z.record(z.any()).optional(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       // First verify ownership
       const search = await ctx.db.search.findUnique({
@@ -309,4 +313,4 @@ IMPORTANT: Return only the JSON structure without any explanations, comments or 
         });
       });
     }),
-}); 
+});

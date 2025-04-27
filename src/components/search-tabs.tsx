@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"
-import { Flow } from "~/components/flow"
-import { Report } from "~/components/report"
-import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import { Button } from "~/components/ui/button"
-import { Share2 } from "lucide-react"
-import { useToast } from "~/hooks/use-toast"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Flow } from "~/components/flow";
+import { Report } from "~/components/report";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { Button } from "~/components/ui/button";
+import { Share2 } from "lucide-react";
+import { useToast } from "~/hooks/use-toast";
 
 export function SearchTabs({ searchId }: { searchId: string }) {
   const router = useRouter();
@@ -29,7 +29,11 @@ export function SearchTabs({ searchId }: { searchId: string }) {
   };
 
   return (
-    <Tabs value={currentTab} onValueChange={onTabChange} className="h-full flex flex-col bg-card">
+    <Tabs
+      value={currentTab}
+      onValueChange={onTabChange}
+      className="flex h-full flex-col bg-card"
+    >
       <div className="flex items-center gap-2 px-4 pt-4">
         <TabsList className="flex">
           <TabsTrigger value="knowledge-map">Knowledge Map</TabsTrigger>
@@ -44,14 +48,14 @@ export function SearchTabs({ searchId }: { searchId: string }) {
           <Share2 className="h-4 w-4" />
         </Button>
       </div>
-      
+
       <TabsContent value="response" className="flex-1 overflow-hidden">
         <Report searchId={searchId} />
       </TabsContent>
-      
+
       <TabsContent value="knowledge-map" className="flex-1 overflow-hidden">
         <Flow />
       </TabsContent>
     </Tabs>
   );
-} 
+}

@@ -9,7 +9,7 @@ import { searchRouter } from "~/server/api/routers/search";
  */
 export const appRouter = createTRPCRouter({
   report: reportRouter,
-  search: searchRouter
+  search: searchRouter,
 });
 
 // export type definition of API

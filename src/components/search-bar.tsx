@@ -1,7 +1,5 @@
-
-
-import { auth } from "~/server/auth"
-import { SearchBarForm } from "./search-bar-form"
+import { auth } from "~/server/auth";
+import { SearchBarForm } from "./search-bar-form";
 
 // const FormSchema = z.object({
 //   query: z.string().min(1, {
@@ -10,7 +8,7 @@ import { SearchBarForm } from "./search-bar-form"
 // })
 
 export async function SearchBar() {
-  const session = await auth()
-  
-  return <SearchBarForm session={session} />
+  const session = await auth();
+
+  return <SearchBarForm session={session} />;
 }

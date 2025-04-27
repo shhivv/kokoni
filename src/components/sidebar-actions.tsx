@@ -1,12 +1,16 @@
-"use client"
+"use client";
 
-import { User2, ChevronsUpDown } from "lucide-react"
-import Link from "next/link"
-import { cn } from "~/lib/utils"
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "~/components/ui/dropdown-menu"
-import { SidebarMenu, SidebarMenuItem } from "~/components/ui/sidebar"
-import { Button } from "./ui/button"
-
+import { User2, ChevronsUpDown } from "lucide-react";
+import Link from "next/link";
+import { cn } from "~/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "~/components/ui/dropdown-menu";
+import { SidebarMenu, SidebarMenuItem } from "~/components/ui/sidebar";
+import { Button } from "./ui/button";
 
 interface SidebarActionsProps {
   session: {
@@ -41,18 +45,18 @@ export function SidebarActions({ session }: SidebarActionsProps) {
         <SidebarMenuItem>
           <Button
             asChild
-            className="text-muted-foreground font-label text-xs"
+            className="font-label text-xs text-muted-foreground"
             variant="link"
           >
             <Link href="/about">Learn more</Link>
-          </Button>       <Button
+          </Button>{" "}
+          <Button
             asChild
-            className="text-muted-foreground font-label text-xs"
+            className="font-label text-xs text-muted-foreground"
             variant="link"
           >
             <Link href="https://github.com/shhivv/kokoni">GitHub</Link>
           </Button>
-
         </SidebarMenuItem>
         <SidebarMenuItem>
           {session ? (
@@ -60,20 +64,20 @@ export function SidebarActions({ session }: SidebarActionsProps) {
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
-                    "w-full px-3 py-4 rounded-md flex items-center",
+                    "flex w-full items-center rounded-md px-3 py-4",
                     "text-sm text-muted-foreground hover:text-foreground",
                     "bg-muted hover:bg-accent",
-                    "transition-all duration-200"
+                    "transition-all duration-200",
                   )}
                 >
-                  <User2 className="w-4 h-4" />
-                  <span className="flex-1 text-left ml-2">{session.user.name}</span>
-                  <ChevronsUpDown className="w-4 h-4 opacity-50" />
+                  <User2 className="h-4 w-4" />
+                  <span className="ml-2 flex-1 text-left">
+                    {session.user.name}
+                  </span>
+                  <ChevronsUpDown className="h-4 w-4 opacity-50" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-[--radix-popper-anchor-width] bg-background"
-              >
+              <DropdownMenuContent className="w-[--radix-popper-anchor-width] bg-background">
                 <DropdownMenuItem className="text-muted-foreground hover:text-foreground focus:text-foreground">
                   <Link href="/api/auth/signout" className="w-full">
                     Sign Out
@@ -85,18 +89,18 @@ export function SidebarActions({ session }: SidebarActionsProps) {
             <Link
               href="/api/auth/signin"
               className={cn(
-                "w-full px-3 py-4 rounded-md flex items-center",
+                "flex w-full items-center rounded-md px-3 py-4",
                 "text-sm text-muted-foreground hover:text-foreground",
                 "bg-muted hover:bg-accent",
-                "transition-all duration-200"
+                "transition-all duration-200",
               )}
             >
-              <User2 className="w-4 h-4" />
+              <User2 className="h-4 w-4" />
               <span>Sign in</span>
             </Link>
           )}
         </SidebarMenuItem>
       </SidebarMenu>
     </>
-  )
-} 
+  );
+}

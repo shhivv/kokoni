@@ -1,6 +1,6 @@
-import React from 'react';
-import { getBezierPath, type Position, type Node } from '@xyflow/react';
-import { getEdgeParams } from '~/lib/initialElements';
+import React from "react";
+import { getBezierPath, type Position, type Node } from "@xyflow/react";
+import { getEdgeParams } from "~/lib/initialElements";
 
 interface FloatingConnectionLineProps {
   toX: number;
@@ -27,7 +27,7 @@ function FloatingConnectionLine({
   }
 
   const targetNode = {
-    id: 'connection-target',
+    id: "connection-target",
     x: toX,
     y: toY,
     measured: { width: 1, height: 1 } as const,

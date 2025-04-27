@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { Button } from "./ui/button"
-import Link from "next/link"
-import { Plus } from "lucide-react"
+import { motion } from "framer-motion";
+import { Button } from "./ui/button";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 
 export function SidebarHeader() {
   return (
@@ -13,22 +13,20 @@ export function SidebarHeader() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <span className="text-xl font-heading mt-1 font-bold text-muted-foreground">
+      <span className="mt-1 font-heading text-xl font-bold text-muted-foreground">
         ᲈ Kokoni
-
-
       </span>
-              <Button
-                asChild
-                type="button"
-                variant="outline"
-                size="icon"
-                className={
-                  "h-8 w-8"
-                }
-              >
-  <Link href="/"><Plus className="w-4 h-4"/></Link>
-</Button>
+      <Button
+        asChild
+        type="button"
+        variant="outline"
+        size="icon"
+        className={"h-8 w-8"}
+      >
+        <Link href="/">
+          <Plus className="h-4 w-4" />
+        </Link>
+      </Button>
     </motion.div>
-  )
-} 
+  );
+}

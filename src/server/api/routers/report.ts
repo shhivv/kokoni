@@ -2,46 +2,51 @@ import { z } from "zod";
 import { tavily } from "@tavily/core";
 import { env } from "~/env";
 import { streamText } from "ai";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-} from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { xai } from "@ai-sdk/xai";
 const tvly = tavily({ apiKey: env.TAVILY_API_KEY });
 
 export const reportRouter = createTRPCRouter({
   produceReport: protectedProcedure
-    .input(z.object({ 
-      originalPrompt: z.string(),
-      keywords: z.array(z.string()),
-      prompt: z.string().optional(),
-      searchId: z.string(),
-      includeStats: z.boolean().default(false),
-      includeWeb: z.boolean().default(false),
-    }))
+    .input(
+      z.object({
+        originalPrompt: z.string(),
+        keywords: z.array(z.string()),
+        prompt: z.string().optional(),
+        searchId: z.string(),
+        includeStats: z.boolean().default(false),
+        includeWeb: z.boolean().default(false),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
-      const searchPromises = input.keywords.map(keyword => 
+      const searchPromises = input.keywords.map((keyword) =>
         tvly.search(input.originalPrompt + ":" + keyword, {
           options: {
             searchDepth: "basic",
           },
-        })
+        }),
       );
 
       const searchResults = await Promise.all(searchPromises);
       const compiledResults = input.keywords.map((keyword, index) => ({
         keyword,
-        content: searchResults[index]?.results
-          .map(r => r.content)
-          .join('\n\n') ?? ''
+        content:
+          searchResults[index]?.results.map((r) => r.content).join("\n\n") ??
+          "",
       }));
 
       // Construct additional instructions based on flags
       const additionalInstructions = [
-        input.prompt ?? '',
-        input.includeStats ? 'Include statistical analysis and data-driven insights where possible.' : '',
-        input.includeWeb ? 'Focus on web-specific information and online trends.' : ''
-      ].filter(Boolean).join('\n');
+        input.prompt ?? "",
+        input.includeStats
+          ? "Include statistical analysis and data-driven insights where possible."
+          : "",
+        input.includeWeb
+          ? "Focus on web-specific information and online trends."
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
 
       const { textStream } = streamText({
         // @ts-expect-error model xai
@@ -50,7 +55,7 @@ export const reportRouter = createTRPCRouter({
 QUESTION: ${input.originalPrompt}
 
 RESEARCH:
-${compiledResults.map(r => `## ${r.keyword}\n${r.content}`).join('\n\n')}
+${compiledResults.map((r) => `## ${r.keyword}\n${r.content}`).join("\n\n")}
 
 Additional instructions: ${additionalInstructions}
 
@@ -65,9 +70,9 @@ Requirements:
 The report should synthesize the information and make connections between the topics.`,
       });
 
-      let fullText = '';
+      let fullText = "";
       for await (const chunk of textStream) {
-        const cleanChunk = chunk.replace(/^# /, '').replace(/<\/?think>/g, '');
+        const cleanChunk = chunk.replace(/^# /, "").replace(/<\/?think>/g, "");
         fullText += cleanChunk;
       }
 

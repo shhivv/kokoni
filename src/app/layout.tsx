@@ -1,6 +1,6 @@
 import "~/styles/globals.css";
 
-import { Newsreader, Figtree, Inter, Red_Hat_Display }  from "next/font/google"
+import { Newsreader, Figtree, Inter, Red_Hat_Display } from "next/font/google";
 import { type Metadata } from "next";
 
 import { TRPCReactProvider } from "~/trpc/react";
@@ -13,27 +13,32 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-const newsreader = Newsreader({ subsets: ['latin'], variable: '--font-newsreader'})
-const figtree = Figtree({ subsets: ['latin'], variable: '--font-figtree'})
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter'})
-const rdh = Red_Hat_Display({ subsets: ['latin'], variable: '--font-rdh'})
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  variable: "--font-newsreader",
+});
+const figtree = Figtree({ subsets: ["latin"], variable: "--font-figtree" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const rdh = Red_Hat_Display({ subsets: ["latin"], variable: "--font-rdh" });
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${newsreader.variable} ${figtree.variable} ${inter.variable} ${rdh.variable} dark antialiased font-sans`}>
+    <html
+      lang="en"
+      className={`${newsreader.variable} ${figtree.variable} ${inter.variable} ${rdh.variable} dark font-sans antialiased`}
+    >
       <body>
         <TRPCReactProvider>
           <SidebarProvider defaultOpen={false} className="bg-card">
             <AppSidebar />
-              <SidebarTrigger className="p-4 m-2"/>
-              <div className="flex min-h-screen flex-col items-center justify-center bg-card w-full text-foreground">
+            <SidebarTrigger className="m-2 p-4" />
+            <div className="flex min-h-screen w-full flex-col items-center justify-center bg-card text-foreground">
               {children}
-              <Toaster/>
-              </div>
+              <Toaster />
+            </div>
           </SidebarProvider>
-
         </TRPCReactProvider>
       </body>
     </html>

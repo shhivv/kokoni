@@ -3,18 +3,18 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-} from "~/components/ui/sidebar"
-import { auth } from "~/server/auth"
-import { SearchList } from "~/components/search-list"
-import { SidebarHeader as AnimatedHeader } from "~/components/sidebar-header"
-import { SidebarActions } from "~/components/sidebar-actions"
-import { Suspense } from "react"
+} from "~/components/ui/sidebar";
+import { auth } from "~/server/auth";
+import { SearchList } from "~/components/search-list";
+import { SidebarHeader as AnimatedHeader } from "~/components/sidebar-header";
+import { SidebarActions } from "~/components/sidebar-actions";
+import { Suspense } from "react";
 
 // Create a client component wrapper for the session-dependent content
 function SidebarContent_({ session }: { session: any }) {
   return (
     <>
-      <SidebarHeader className="pt-8 px-4">
+      <SidebarHeader className="px-4 pt-8">
         <AnimatedHeader />
       </SidebarHeader>
 
@@ -22,21 +22,27 @@ function SidebarContent_({ session }: { session: any }) {
         {session ? <SearchList /> : null}
       </SidebarContent>
 
-      <SidebarFooter className="p-2 space-y-2">
+      <SidebarFooter className="space-y-2 p-2">
         <SidebarActions
           session={
             session
-              ? { ...session, user: { ...session.user, name: session.user.name ?? "Anonymous" } }
+              ? {
+                  ...session,
+                  user: {
+                    ...session.user,
+                    name: session.user.name ?? "Anonymous",
+                  },
+                }
               : null
           }
         />
       </SidebarFooter>
     </>
-  )
+  );
 }
 
 export async function AppSidebar() {
-  const session = await auth()
+  const session = await auth();
 
   return (
     <Sidebar className="border-r-neutralborder/30">
@@ -44,5 +50,5 @@ export async function AppSidebar() {
         <SidebarContent_ session={session} />
       </Suspense>
     </Sidebar>
-  )
+  );
 }

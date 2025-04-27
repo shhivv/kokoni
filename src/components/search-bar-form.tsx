@@ -1,155 +1,162 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { useRouter } from "next/navigation"
-import { toast } from "~/hooks/use-toast"
-import { Button } from "~/components/ui/button"
-import { signIn } from "next-auth/react"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { useRouter } from "next/navigation";
+import { toast } from "~/hooks/use-toast";
+import { Button } from "~/components/ui/button";
+import { signIn } from "next-auth/react";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormMessage,
-} from "~/components/ui/form"
-import { ArrowRight } from "lucide-react"
-import { api } from "~/trpc/react"
-import type { Session } from "next-auth"
-import { useState } from "react"
-import { Textarea } from "~/components/ui/textarea"
+} from "~/components/ui/form";
+import { ArrowRight } from "lucide-react";
+import { api } from "~/trpc/react";
+import type { Session } from "next-auth";
+import { useState } from "react";
+import { Textarea } from "~/components/ui/textarea";
 
 const FormSchema = z.object({
   query: z.string().min(1, {
     message: "Query must be at least 1 character",
   }),
-})
+});
 
 interface SearchBarFormProps {
-  session: Session | null
+  session: Session | null;
 }
 
 export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
-  const router = useRouter()
-  const utils = api.useUtils()
-  const [inputValue, setInputValue] = useState("")
-  
+  const router = useRouter();
+  const utils = api.useUtils();
+  const [inputValue, setInputValue] = useState("");
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       query: "",
     },
-  })
+  });
 
   const searchQuery = api.search.getAll.useQuery(undefined, {
     refetchOnWindowFocus: false,
     enabled: !!session,
-  })
+  });
 
   const createSearch = api.search.create.useMutation({
     onSuccess: async (data) => {
       toast({
         title: "Search created",
-        description: "Redirecting..."
-      })
-      form.reset()
-      await utils.search.getAll.invalidate()
+        description: "Redirecting...",
+      });
+      form.reset();
+      await utils.search.getAll.invalidate();
       // Navigate to the actual search page after creation
-      router.push(`/${data.id}`)
+      router.push(`/${data.id}`);
     },
     onError: (error) => {
       // Hide loading overlay on error
-      const loadingOverlay = document.getElementById('loading-overlay')
+      const loadingOverlay = document.getElementById("loading-overlay");
       if (loadingOverlay) {
-        loadingOverlay.style.display = 'none'
+        loadingOverlay.style.display = "none";
       }
-      
+
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
-      })
+      });
     },
-  })
+  });
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!session) {
-      await signIn()
-      return
+      await signIn();
+      return;
     }
-    
+
     // Validate input
     if (!data.query.trim()) {
       toast({
         title: "Error",
         description: "Please enter a search query",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
-    
+
     // Show loading overlay
-    const loadingOverlay = document.getElementById('loading-overlay')
+    const loadingOverlay = document.getElementById("loading-overlay");
     if (loadingOverlay) {
-      loadingOverlay.style.display = 'flex'
+      loadingOverlay.style.display = "flex";
     }
-    
+
     try {
       // Create the search
       createSearch.mutate({
         name: data.query.trim(),
         additionalInstruction: "",
-      })
+      });
     } catch (error) {
       // Hide loading overlay on error
       if (loadingOverlay) {
-        loadingOverlay.style.display = 'none'
+        loadingOverlay.style.display = "none";
       }
-      
+
       toast({
         title: "Error",
         description: "Failed to create search. Please try again.",
         variant: "destructive",
-      })
+      });
     }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInputValue(e.target.value)
-    form.setValue("query", e.target.value)
-  }
+    setInputValue(e.target.value);
+    form.setValue("query", e.target.value);
+  };
 
   const getFontSize = () => {
-    const baseSize = 64 // Starting font size (increased from 48)
-    const minSize = 40 // Minimum font size (increased from 24)
-    const maxLength = 20 // Length at which font size starts decreasing
-    
+    const baseSize = 64; // Starting font size (increased from 48)
+    const minSize = 40; // Minimum font size (increased from 24)
+    const maxLength = 20; // Length at which font size starts decreasing
+
     if (inputValue.length <= maxLength) {
-      return baseSize
+      return baseSize;
     }
-    
+
     // Decrease font size gradually after maxLength
-    const decrease = Math.min((inputValue.length - maxLength) * 3, baseSize - minSize)
-    return baseSize - decrease
-  }
+    const decrease = Math.min(
+      (inputValue.length - maxLength) * 3,
+      baseSize - minSize,
+    );
+    return baseSize - decrease;
+  };
 
   return (
-    <div className="flex flex-col w-full gap-2 items-center justify-center min-h-[85vh]">
+    <div className="flex min-h-[85vh] w-full flex-col items-center justify-center gap-2">
       <Form {...form}>
-        <form autoComplete="false" onSubmit={form.handleSubmit(onSubmit)} className="w-[85vh] aspect-square flex flex-col items-center justify-center gap-4 relative">
+        <form
+          autoComplete="false"
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="relative flex aspect-square w-[85vh] flex-col items-center justify-center gap-4"
+        >
           <FormField
             control={form.control}
             name="query"
             render={({ field }) => (
-              <FormItem className="w-full h-full">
+              <FormItem className="h-full w-full">
                 <FormControl>
-                  <div className="w-full h-full flex items-center justify-center">
+                  <div className="flex h-full w-full items-center justify-center">
                     <Textarea
-                    autoFocus
-                      className="w-full h-full font-serif outline-none border-0 rounded-none ring-0 ring-offset-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus:border-0 bg-transparent text-foreground placeholder:text-muted-foreground/50 text-center resize-none"
+                      autoFocus
+                      className="h-full w-full resize-none rounded-none border-0 bg-transparent text-center font-serif text-foreground outline-none ring-0 ring-offset-0 placeholder:text-muted-foreground/50 focus:border-0 focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       autoComplete="false"
-                      style={{ 
+                      style={{
                         fontSize: `${getFontSize()}px`,
                         lineHeight: "1.2",
                         padding: "0",
@@ -157,21 +164,25 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
                         height: "85vh",
                         whiteSpace: "pre-wrap",
                         overflowWrap: "break-word",
-                        verticalAlign: "middle"
+                        verticalAlign: "middle",
                       }}
-                      placeholder={session ? `What do you want to learn about, ${session.user.name?.split(" ")[0]}?` : "Sign in to ask questions..."}
+                      placeholder={
+                        session
+                          ? `What do you want to learn about, ${session.user.name?.split(" ")[0]}?`
+                          : "Sign in to ask questions..."
+                      }
                       {...field}
                       onChange={handleInputChange}
                       disabled={createSearch.status === "pending"}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
+                        if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
                           void form.handleSubmit(onSubmit)();
                         }
                       }}
                       onFocus={async () => {
                         if (!session) {
-                          await signIn()
+                          await signIn();
                         }
                       }}
                     />
@@ -187,15 +198,15 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
             className="absolute bottom-0 right-0 text-accent-foreground hover:text-foreground"
             disabled={createSearch.status === "pending"}
           >
-            <ArrowRight/>
+            <ArrowRight />
           </Button>
         </form>
       </Form>
       {session && (
-        <p className="text-xs text-muted-foreground text-center font-label">
+        <p className="text-center font-label text-xs text-muted-foreground">
           Searches Remaining: {5 - (searchQuery.data?.length ?? 0)}/5
         </p>
       )}
     </div>
-  )
+  );
 }
