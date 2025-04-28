@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect, useMemo } from "react";
 import {
   ReactFlow,
   useNodesState,
@@ -21,11 +21,13 @@ import { useRouter, useParams } from "next/navigation";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import { BarChart3, Globe } from "lucide-react";
+import { useDebounce } from "~/hooks/use-debounce";
 
 // Define the node type
 interface FlowNode extends Node {
   data: {
     label: string;
+    originalLabel?: string;
   };
   style?: React.CSSProperties;
 }
@@ -68,10 +70,14 @@ export const Flow: React.FC = () => {
   const { data: search } = api.search.getById.useQuery({
     id: params.slug,
   });
+  const generateSummary = api.search.summary.useMutation();
 
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [selectedNodes, setSelectedNodes] = useState<FlowNode[]>([]);
+  const [nodeSummaries, setNodeSummaries] = useState<Record<string, string>>({});
+  const [processedNodes, setProcessedNodes] = useState<Set<string>>(new Set());
+  const [isProcessing, setIsProcessing] = useState(false);
   const [prompt, setPrompt] = useState("");
   const { toast } = useToast();
   const router = useRouter();
@@ -79,33 +85,156 @@ export const Flow: React.FC = () => {
   const [includeStats, setIncludeStats] = useState(false);
   const [includeWeb, setIncludeWeb] = useState(false);
 
-  // Update nodes when search data changes
-  useEffect(() => {
-    if (search?.KnowledgeMap?.contents) {
-      const { nodes: newNodes, edges: newEdges } = initialElements(
-        search.KnowledgeMap.contents as Record<string, unknown>,
-      );
-      setNodes(
-        newNodes.map((node) => ({
-          ...node,
-          style: nodeStyles,
-        })) as FlowNode[],
-      );
-      setEdges(newEdges);
-    }
-  }, [search, setNodes, setEdges]);
+  const debouncedSelectedNodes = useDebounce(selectedNodes, 500);
 
-  // Restore node highlighting
+  // Memoize the initial nodes setup
+  const initialNodes = useMemo(() => {
+    if (!search?.KnowledgeMap?.contents) return [];
+
+    const questions = search.KnowledgeMap.contents as string[];
+    const mainTopic = search.name;
+    
+    const centralNode = {
+      id: 'central',
+      type: 'default',
+      position: { x: 300, y: 200 },
+      data: { 
+        label: mainTopic,
+        originalLabel: mainTopic,
+      },
+      style: {
+        ...nodeStyles,
+        background: "hsl(var(--primary))",
+        color: "hsl(var(--primary-foreground))",
+        border: "2px solid hsl(var(--primary))",
+      },
+    };
+
+    const questionNodes = questions.map((question, index) => {
+      const angle = (index * (2 * Math.PI)) / questions.length;
+      const radius = 200;
+      const x = 300 + radius * Math.cos(angle);
+      const y = 200 + radius * Math.sin(angle);
+      
+      return {
+        id: `question-${index}`,
+        type: 'default',
+        position: { x, y },
+        data: { 
+          label: question,
+          originalLabel: question,
+        },
+        style: nodeStyles,
+      };
+    });
+
+    return [centralNode, ...questionNodes];
+  }, [search]);
+
+  // Memoize the edges
+  const initialEdges = useMemo(() => {
+    if (!search?.KnowledgeMap?.contents) return [];
+    
+    const questions = search.KnowledgeMap.contents as string[];
+    return questions.map((_, index) => ({
+      id: `edge-${index}`,
+      source: 'central',
+      target: `question-${index}`,
+      type: 'floating',
+    }));
+  }, [search]);
+
+  // Set initial nodes and edges only once when search data changes
   useEffect(() => {
-    setNodes((nds) =>
-      nds.map((node) => ({
-        ...node,
-        style: selectedNodes.find((n) => n.id === node.id)
-          ? selectedNodeStyles
-          : nodeStyles,
-      })),
+    if (initialNodes.length > 0) {
+      setNodes(initialNodes);
+      setEdges(initialEdges);
+    }
+  }, [initialNodes, initialEdges, setNodes, setEdges]);
+
+  // Generate summaries for selected nodes
+  useEffect(() => {
+    if (isProcessing) return;
+
+    const generateSummaries = async () => {
+      const nodesToProcess = debouncedSelectedNodes.filter(
+        node => !processedNodes.has(node.id) && node.id !== 'central'
+      );
+
+      if (nodesToProcess.length === 0) return;
+
+      setIsProcessing(true);
+      const newSummaries = { ...nodeSummaries };
+      const newProcessedNodes = new Set(processedNodes);
+
+      try {
+        for (const node of nodesToProcess) {
+          if (!newProcessedNodes.has(node.id)) {
+            const summary = await generateSummary.mutateAsync({
+              question: node.data.originalLabel,
+            });
+            newSummaries[node.id] = summary;
+            newProcessedNodes.add(node.id);
+          }
+        }
+
+        setNodeSummaries(newSummaries);
+        setProcessedNodes(newProcessedNodes);
+      } catch (error) {
+        console.error('Failed to generate summaries:', error);
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    void generateSummaries();
+  }, [debouncedSelectedNodes, processedNodes, isProcessing, generateSummary]);
+
+  // Update nodes with summaries and styles
+  useEffect(() => {
+    if (nodes.length === 0) return;
+
+    setNodes((currentNodes) =>
+      currentNodes.map((node) => {
+        if (node.id === 'central') return node;
+        
+        const summary = nodeSummaries[node.id];
+        const originalLabel = node.data.originalLabel ?? node.data.label;
+        const isSelected = selectedNodes.some((n) => n.id === node.id);
+        
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            label: summary ? `${originalLabel}\n\n${summary}` : originalLabel,
+          },
+          style: isSelected
+            ? selectedNodeStyles
+            : node.id === 'central'
+              ? { ...nodeStyles, background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", border: "2px solid hsl(var(--primary))" }
+              : nodeStyles,
+        };
+      }),
     );
-  }, [selectedNodes, setNodes]);
+  }, [nodeSummaries, selectedNodes, setNodes]);
+
+  // Handle node selection
+  const onSelectionChange = useCallback((params: OnSelectionChangeParams) => {
+    if (!params.nodes.length) {
+      setSelectedNodes([]);
+      return;
+    }
+
+    const newNode = params.nodes[params.nodes.length - 1] as FlowNode;
+    if (!newNode || newNode.id === 'central') return;
+
+    setSelectedNodes((prev) => {
+      if (prev.find((n) => n.id === newNode.id)) {
+        return prev.filter((n) => n.id !== newNode.id);
+      }
+      return [...prev, newNode];
+    });
+  }, []);
 
   const generateReport = api.report.produceReport.useMutation({
     onSuccess: async () => {
@@ -126,25 +255,6 @@ export const Flow: React.FC = () => {
     },
   });
 
-  // Handle node selection
-  const onSelectionChange = useCallback((params: OnSelectionChangeParams) => {
-    if (!params.nodes.length) {
-      return;
-    }
-
-    const newNode = params.nodes[params.nodes.length - 1] as FlowNode;
-    if (!newNode) return;
-
-    setSelectedNodes((prev) => {
-      // If node is already selected, remove it
-      if (prev.find((n) => n.id === newNode.id)) {
-        return prev.filter((n) => n.id !== newNode.id);
-      }
-      // Otherwise add it
-      return [...prev, newNode];
-    });
-  }, []);
-
   // Clear selection handler
   const clearSelection = useCallback(() => {
     setSelectedNodes([]);
@@ -161,8 +271,8 @@ export const Flow: React.FC = () => {
         proOptions={{ hideAttribution: true }}
         fitView
         fitViewOptions={{
-          padding: 0.5, // Reduced from default
-          maxZoom: 1.5, // Reduced max zoom
+          padding: 0.5,
+          maxZoom: 1.5,
         }}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
@@ -174,7 +284,7 @@ export const Flow: React.FC = () => {
         nodesConnectable={false}
         panOnDrag
         minZoom={0.2}
-        maxZoom={1.5} // Reduced from 4 to 1.5
+        maxZoom={1.5}
         selectionMode={"multi" as unknown as SelectionMode}
         selectNodesOnDrag={false}
         multiSelectionKeyCode="Shift"

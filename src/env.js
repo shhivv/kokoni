@@ -16,6 +16,7 @@ export const env = createEnv({
     GROQ_API_KEY: z.string().min(1),
     OPENROUTER_API_KEY: z.string().min(1),
     XAI_API_KEY: z.string().min(1),
+    GOOGLE_GENERATIVE_AI_API_KEY : z.string().min(1)
   },
 
   /**
@@ -41,6 +42,7 @@ export const env = createEnv({
     GROQ_API_KEY: process.env.GROQ_API_KEY,
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
     XAI_API_KEY: process.env.XAI_API_KEY,
+    GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

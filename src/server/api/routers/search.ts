@@ -4,7 +4,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
-import { xai } from "@ai-sdk/xai";
+import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { tavily } from "@tavily/core";
 import { env } from "~/env";
@@ -107,87 +107,35 @@ export const searchRouter = createTRPCRouter({
           maxResults: 1,
         },
       });
-      const structurePrompt = `Create a hierarchical knowledge map structure as a JSON object for the topic: "${input.name}" 
+      const structurePrompt = `Generate three short, focused follow-up questions about the topic: "${input.name}" 
 
 Here are some key points to consider:
 ${search.results.map((r) => r.content).join("\n")}
 
-The structure should be nested with related concepts grouped together. Focus on key concepts, subtopics, and their relationships.
+The questions should:
+1. Be short and concise (aim for 5-10 words)
+2. Focus on one specific aspect of the topic
+3. Be easy to understand at a glance
+4. Be relevant to the topic
+5. Encourage exploration and discussion
+6. Avoid yes/no questions
 
 Additional instructions: ${input.additionalInstruction}
 
-Requirements:
-1. Your response must be a valid JSON object without any additional text
-2. Use nested objects and arrays to show hierarchy
-3. Keep the structure focused and relevant to the topic
-4. Include important subtopics and related concepts
-5. Make connections between related ideas
-6. Use clear, human-readable labels with spaces instead of underscores (e.g., "Campus Response" instead of "campus_response")
-7. Ensure the response does not contain any string to string key-value pairs in the JSON structure
+Example format (DO NOT copy these exact questions, create appropriate ones for the topic):
+[
+  "What started the Industrial Revolution?",
+  "How did workers' lives change?",
+  "What were the environmental effects?"
+]
 
-Example format (DO NOT copy this exact structure, create an appropriate one for the topic):
-{
-  "Industrial Revolution": [
-    "1760-1840",
-    "Great Britain",
-    {
-      "Key Invention": [
-        "Steam engine",
-        "Power loom",
-        "Cotton gin",
-        {
-          "Transportation": [
-            "Railway",
-            "Steamboat",
-            "Locomotive"
-          ]
-        }
-      ]
-    },
-    {
-      "Social Changes": [
-        "Urbanization",
-        "Factory system",
-        "Working class",
-        {
-          "Living Conditions": [
-            "Tenements",
-            "Pollution",
-            "Public health issues"
-          ]
-        }
-      ]
-    },
-    {
-      "Economic Impact": [
-        "Mass production",
-        "Capitalism",
-        "Global trade",
-        {
-          "resources": [
-            "Coal",
-            "Iron",
-            "Steel"
-          ]
-        }
-      ]
-    },
-    [
-      "Second Industrial Revolution",
-      "1870-1914",
-      "Electricity",
-      "Oil"
-    ]
-  ]
-}
-
-IMPORTANT: Return only the JSON structure without any explanations, comments or code blocks. Use proper capitalization and spaces in all labels.`;
+IMPORTANT: Return only the array of 3 questions as a valid JSON array without any additional text, explanations, or code blocks.`;
       const startTime = performance.now();
       const response = await generateObject({
         // @ts-expect-error model xai
-        model: xai("grok-3-mini"),
+        model: google("gemini-1.5-flash"),
         schema: z.object({
-          knowledgeMap: z.record(z.any()),
+          questions: z.array(z.string()),
         }),
         prompt: structurePrompt,
       });
@@ -196,7 +144,7 @@ IMPORTANT: Return only the JSON structure without any explanations, comments or 
         `generateObject call took ${(endTime - startTime) / 1000} seconds`,
       );
 
-      const knowledgeMap = response.object.knowledgeMap;
+      const questions = response.object.questions;
 
       return await ctx.db.search.create({
         data: {
@@ -205,7 +153,7 @@ IMPORTANT: Return only the JSON structure without any explanations, comments or 
           createdById: ctx.session.user.id,
           KnowledgeMap: {
             create: {
-              contents: knowledgeMap,
+              contents: questions,
             },
           },
           Report: {
@@ -312,5 +260,33 @@ IMPORTANT: Return only the JSON structure without any explanations, comments or 
           },
         });
       });
+    }),
+
+  // POST /search/summary
+  summary: protectedProcedure
+    .input(z.object({ question: z.string() }))
+    .mutation(async ({ input }) => {
+      const summaryPrompt = `Create a very short summary (max 100 characters) answering this question: "${input.question}"
+
+Requirements:
+1. Be extremely concise
+2. Focus on the key point
+3. Use simple language
+4. Stay under 100 characters
+5. Return only the summary text, no quotes or additional text
+
+Example format:
+The Industrial Revolution began with steam power and mechanization, transforming manufacturing and society.`;
+
+      const response = await generateObject({
+        // @ts-expect-error model xai
+        model: google("gemini-1.5-flash"),
+        schema: z.object({
+          summary: z.string().max(100),
+        }),
+        prompt: summaryPrompt,
+      });
+
+      return response.object.summary;
     }),
 });
