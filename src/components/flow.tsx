@@ -44,6 +44,7 @@ const nodeStyles = {
   borderRadius: "0.5rem",
   padding: "0.5rem 1rem",
   transition: "border 0.2s ease, box-shadow 0.2s ease",
+  minWidth: "200px",
 };
 
 const selectedNodeStyles = {
@@ -63,6 +64,40 @@ const defaultEdgeOptions = {
     strokeDasharray: "4,4",
     strokeWidth: 1,
   },
+};
+
+// Custom node component
+const CustomNode: React.FC<{
+  data: { label: string; originalLabel: string };
+  selected: boolean;
+  id: string;
+}> = ({ data, selected, id }) => {
+  const [label, summary] = data.label.split('\n\n');
+  
+  return (
+    <div className="relative group">
+      <div className="absolute -top-8 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button 
+          className="p-1.5 bg-muted rounded-full hover:bg-accent transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            // TODO: Add graph functionality
+            console.log('Graph clicked for node:', id);
+          }}
+        >
+          <BarChart3 className="w-4 h-4 text-muted-foreground" />
+        </button>
+      </div>
+      <div>
+        <div className="font-medium text-sm">{label}</div>
+        {summary && (
+          <div className="mt-1 text-xs font-normal text-muted-foreground border-t border-border pt-1">
+            {summary}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export const Flow: React.FC = () => {
@@ -260,6 +295,56 @@ export const Flow: React.FC = () => {
     setSelectedNodes([]);
   }, []);
 
+  // Update nodes when search data changes
+  useEffect(() => {
+    if (search?.KnowledgeMap?.contents) {
+      const questions = search.KnowledgeMap.contents as string[];
+      const mainTopic = search.name;
+      
+      const centralNode = {
+        id: 'central',
+        type: 'default',
+        position: { x: 300, y: 200 },
+        data: { 
+          label: mainTopic,
+          originalLabel: mainTopic,
+        },
+        style: {
+          ...nodeStyles,
+          background: "hsl(var(--primary))",
+          color: "hsl(var(--primary-foreground))",
+          border: "2px solid hsl(var(--primary))",
+        },
+      };
+
+      const questionNodes = questions.map((question, index) => {
+        const angle = (index * (2 * Math.PI)) / questions.length;
+        const radius = 200;
+        const x = 300 + radius * Math.cos(angle);
+        const y = 200 + radius * Math.sin(angle);
+        
+        return {
+          id: `question-${index}`,
+          type: 'default',
+          position: { x, y },
+          data: { 
+            label: question,
+            originalLabel: question,
+          },
+          style: nodeStyles,
+        };
+      });
+
+      setNodes(
+        [centralNode, ...questionNodes].map((node) => ({
+          ...node,
+          style: node.id === 'central' ? centralNode.style : nodeStyles,
+        })) as FlowNode[],
+      );
+      setEdges(initialEdges);
+    }
+  }, [search, setNodes, setEdges, initialEdges]);
+
   return (
     <div className="floating-edges relative h-full w-full bg-card">
       <ReactFlow
@@ -269,6 +354,7 @@ export const Flow: React.FC = () => {
         onEdgesChange={onEdgesChange}
         onSelectionChange={onSelectionChange}
         proOptions={{ hideAttribution: true }}
+        nodeTypes={{ default: CustomNode }}
         fitView
         fitViewOptions={{
           padding: 0.5,
