@@ -15,7 +15,7 @@ export async function generateMetadata({
   try {
     const search = await api.search.getById({ id: slug });
     return {
-      title: search.name,
+      title: search.query,
     };
   } catch (error) {
     return {

@@ -33,7 +33,7 @@ export const searchRouter = createTRPCRouter({
 
   // GET /search/<id> (protected)
   getById: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const search = await ctx.db.search.findUnique({
         where: {
@@ -58,7 +58,7 @@ export const searchRouter = createTRPCRouter({
 
   // GET /search/<id> (public)
   getByIdPublic: publicProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const search = await ctx.db.search.findUnique({
         where: {
@@ -162,30 +162,11 @@ The British Industrial Revolution negatively impacted India, transforming it int
         prompt: summaryPrompt,
       });
 
-      // Create the search with root node
+      // Create the search without root node
       const search = await ctx.db.search.create({
         data: {
           query: input.query,
           createdById: ctx.session.user.id,
-          rootNode: {
-            create: {
-              question: mainQuestion,
-              selected: true,
-              summary: summaryResponse.object.summary,
-              search: {
-                connect: {
-                  id: undefined, // This will be set automatically by Prisma
-                },
-              },
-            },
-          },
-        },
-        include: {
-          rootNode: {
-            include: {
-              children: true,
-            },
-          },
         },
       });
 
@@ -198,12 +179,47 @@ The British Industrial Revolution negatively impacted India, transforming it int
         })),
       });
 
-      return search;
+      // Create root node and connect it to the search
+      const rootNode = await ctx.db.node.create({
+        data: {
+          question: mainQuestion,
+          selected: true,
+          summary: summaryResponse.object.summary,
+          search: {
+            connect: {
+              id: search.id,
+            },
+          },
+        },
+      });
+
+      // Update the search to connect it with the root node
+      const updatedSearch = await ctx.db.search.update({
+        where: {
+          id: search.id,
+        },
+        data: {
+          rootNode: {
+            connect: {
+              id: rootNode.id,
+            },
+          },
+        },
+        include: {
+          rootNode: {
+            include: {
+              children: true,
+            },
+          },
+        },
+      });
+
+      return updatedSearch;
     }),
 
   // DELETE /search/<id>
   delete: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const search = await ctx.db.search.findUnique({
         where: {
@@ -230,7 +246,7 @@ The British Industrial Revolution negatively impacted India, transforming it int
   update: protectedProcedure
     .input(
       z.object({
-        id: z.number(),
+        id: z.string(),
         query: z.string().optional(),
         rootNode: z.object({
           question: z.string(),

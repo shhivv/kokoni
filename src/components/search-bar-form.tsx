@@ -98,8 +98,7 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
     try {
       // Create the search
       createSearch.mutate({
-        name: data.query.trim(),
-        additionalInstruction: "",
+        query: data.query.trim(),
       });
     } catch (error) {
       // Hide loading overlay on error

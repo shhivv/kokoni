@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useState, useEffect, useMemo } from "react";
+import React, { useCallback, useState, useEffect, useMemo, useRef } from "react";
 import {
   ReactFlow,
   useNodesState,
@@ -28,6 +28,8 @@ interface FlowNode extends Node {
   data: {
     label: string;
     originalLabel?: string;
+    nodeId?: number;  // Changed from string to number since Node.id is still Int
+    selected?: boolean;
   };
   style?: React.CSSProperties;
 }
@@ -105,7 +107,8 @@ export const Flow: React.FC = () => {
   const { data: search } = api.search.getById.useQuery({
     id: params.slug,
   });
-  const generateSummary = api.search.summary.useMutation();
+  const selectNode = api.search.selectNode.useMutation();
+ 
 
   const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -122,12 +125,17 @@ export const Flow: React.FC = () => {
 
   const debouncedSelectedNodes = useDebounce(selectedNodes, 500);
 
+  // Add refs to track previous values
+  const prevNodeSummariesRef = useRef<Record<string, string>>({});
+  const prevSelectedNodesRef = useRef<FlowNode[]>([]);
+  const prevNodesRef = useRef<FlowNode[]>([]);
+  const prevProcessedNodesRef = useRef<Set<string>>(new Set());
+
   // Memoize the initial nodes setup
   const initialNodes = useMemo(() => {
-    if (!search?.KnowledgeMap?.contents) return [];
+    if (!search?.rootNode) return [];
 
-    const questions = search.KnowledgeMap.contents as string[];
-    const mainTopic = search.name;
+    const mainTopic = search.query; // Changed from search.name to search.query
     
     const centralNode = {
       id: 'central',
@@ -136,6 +144,8 @@ export const Flow: React.FC = () => {
       data: { 
         label: mainTopic,
         originalLabel: mainTopic,
+        nodeId: search.rootNode.id,
+        selected: search.rootNode.selected,
       },
       style: {
         ...nodeStyles,
@@ -145,47 +155,97 @@ export const Flow: React.FC = () => {
       },
     };
 
-    const questionNodes = questions.map((question, index) => {
-      const angle = (index * (2 * Math.PI)) / questions.length;
-      const radius = 200;
-      const x = 300 + radius * Math.cos(angle);
-      const y = 200 + radius * Math.sin(angle);
-      
-      return {
-        id: `question-${index}`,
-        type: 'default',
-        position: { x, y },
-        data: { 
-          label: question,
-          originalLabel: question,
-        },
-        style: nodeStyles,
-      };
-    });
+    // Create nodes for all children recursively
+    const createNodesForChildren = (parentNode: any, level: number, startAngle: number, endAngle: number) => {
+      if (!parentNode.children || parentNode.children.length === 0) return [];
 
-    return [centralNode, ...questionNodes];
+      const nodes: FlowNode[] = [];
+      const angleStep = (endAngle - startAngle) / parentNode.children.length;
+      const radius = 200 + (level * 150); // Increase radius for each level
+
+      parentNode.children.forEach((child: any, index: number) => {
+        const angle = startAngle + (index * angleStep) + (angleStep / 2);
+        const x = 300 + radius * Math.cos(angle);
+        const y = 200 + radius * Math.sin(angle);
+        
+        const node: FlowNode = {
+          id: `node-${child.id}`,
+          type: 'default',
+          position: { x, y },
+          data: { 
+            label: child.question,
+            originalLabel: child.question,
+            nodeId: child.id,
+            selected: child.selected,
+          },
+          style: child.selected ? selectedNodeStyles : nodeStyles,
+        };
+
+        nodes.push(node);
+
+        // Recursively create nodes for children
+        const childStartAngle = startAngle + (index * angleStep);
+        const childEndAngle = startAngle + ((index + 1) * angleStep);
+        const childNodes = createNodesForChildren(child, level + 1, childStartAngle, childEndAngle);
+        nodes.push(...childNodes);
+      });
+
+      return nodes;
+    };
+
+    const childNodes = createNodesForChildren(search.rootNode, 0, 0, 2 * Math.PI);
+    return [centralNode, ...childNodes];
   }, [search]);
 
   // Memoize the edges
   const initialEdges = useMemo(() => {
-    if (!search?.KnowledgeMap?.contents) return [];
+    if (!search?.rootNode) return [];
     
-    const questions = search.KnowledgeMap.contents as string[];
-    return questions.map((_, index) => ({
-      id: `edge-${index}`,
-      source: 'central',
-      target: `question-${index}`,
-      type: 'floating',
-    }));
+    const edges: Edge[] = [];
+    
+    // Create edges recursively
+    const createEdgesForChildren = (parentNode: any) => {
+      if (!parentNode.children || parentNode.children.length === 0) return;
+
+      parentNode.children.forEach((child: any) => {
+        const sourceId = parentNode.id === search.rootNode?.id ? 'central' : `node-${parentNode.id}`;
+        edges.push({
+          id: `edge-${parentNode.id}-${child.id}`,
+          source: sourceId,
+          target: `node-${child.id}`,
+          type: 'floating',
+        });
+
+        // Recursively create edges for children
+        createEdgesForChildren(child);
+      });
+    };
+
+    createEdgesForChildren(search.rootNode);
+    return edges;
   }, [search]);
 
   // Set initial nodes and edges only once when search data changes
   useEffect(() => {
     if (initialNodes.length > 0) {
-      setNodes(initialNodes);
-      setEdges(initialEdges);
+      // Check if we need to update based on changes in initialNodes
+      const nodesChanged = JSON.stringify(initialNodes.map(n => n.id)) !== 
+                          JSON.stringify(prevNodesRef.current.map(n => n.id));
+      
+      if (nodesChanged) {
+        setNodes(initialNodes as FlowNode[]);
+        prevNodesRef.current = [...initialNodes];
+      }
+      
+      // Check if we need to update based on changes in initialEdges
+      const edgesChanged = JSON.stringify(initialEdges.map(e => e.id)) !== 
+                          JSON.stringify(edges.map(e => e.id));
+      
+      if (edgesChanged) {
+        setEdges(initialEdges);
+      }
     }
-  }, [initialNodes, initialEdges, setNodes, setEdges]);
+  }, [initialNodes, initialEdges, setNodes, setEdges, edges]);
 
   // Generate summaries for selected nodes
   useEffect(() => {
@@ -193,7 +253,7 @@ export const Flow: React.FC = () => {
 
     const generateSummaries = async () => {
       const nodesToProcess = debouncedSelectedNodes.filter(
-        node => !processedNodes.has(node.id) && node.id !== 'central'
+        node => !processedNodes.has(node.id) && node.id !== 'central' && node.data.selected
       );
 
       if (nodesToProcess.length === 0) return;
@@ -206,15 +266,31 @@ export const Flow: React.FC = () => {
         for (const node of nodesToProcess) {
           if (!newProcessedNodes.has(node.id)) {
             const summary = await generateSummary.mutateAsync({
-              question: node.data.originalLabel,
+              nodeId: node.data.nodeId!,
             });
             newSummaries[node.id] = summary;
             newProcessedNodes.add(node.id);
           }
         }
 
-        setNodeSummaries(newSummaries);
-        setProcessedNodes(newProcessedNodes);
+        // Only update state if there are actual changes
+        const hasSummaryChanges = Object.keys(newSummaries).some(
+          key => newSummaries[key] !== nodeSummaries[key]
+        );
+        
+        const hasProcessedChanges = 
+          newProcessedNodes.size !== processedNodes.size ||
+          Array.from(newProcessedNodes).some(nodeId => !processedNodes.has(nodeId));
+        
+        if (hasSummaryChanges) {
+          setNodeSummaries(newSummaries);
+          prevNodeSummariesRef.current = { ...newSummaries };
+        }
+        
+        if (hasProcessedChanges) {
+          setProcessedNodes(newProcessedNodes);
+          prevProcessedNodesRef.current = new Set(newProcessedNodes);
+        }
       } catch (error) {
         console.error('Failed to generate summaries:', error);
       } finally {
@@ -222,39 +298,60 @@ export const Flow: React.FC = () => {
       }
     };
 
-    void generateSummaries();
+    // Check if we need to process nodes
+    const selectedNodesChanged = JSON.stringify(debouncedSelectedNodes.map(n => n.id)) !== 
+                                JSON.stringify(prevSelectedNodesRef.current.map(n => n.id));
+    
+    if (selectedNodesChanged) {
+      prevSelectedNodesRef.current = [...debouncedSelectedNodes];
+      void generateSummaries();
+    }
   }, [debouncedSelectedNodes, processedNodes, isProcessing, generateSummary]);
 
   // Update nodes with summaries and styles
   useEffect(() => {
     if (nodes.length === 0) return;
-
-    setNodes((currentNodes) =>
-      currentNodes.map((node) => {
-        if (node.id === 'central') return node;
-        
-        const summary = nodeSummaries[node.id];
-        const originalLabel = node.data.originalLabel ?? node.data.label;
-        const isSelected = selectedNodes.some((n) => n.id === node.id);
-        
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            label: summary ? `${originalLabel}\n\n${summary}` : originalLabel,
-          },
-          style: isSelected
-            ? selectedNodeStyles
-            : node.id === 'central'
-              ? { ...nodeStyles, background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", border: "2px solid hsl(var(--primary))" }
-              : nodeStyles,
-        };
-      }),
-    );
+    
+    // Check if we need to update based on changes in dependencies
+    const nodeSummariesChanged = JSON.stringify(nodeSummaries) !== JSON.stringify(prevNodeSummariesRef.current);
+    const selectedNodesChanged = JSON.stringify(selectedNodes.map(n => n.id)) !== JSON.stringify(prevSelectedNodesRef.current.map(n => n.id));
+    
+    // If nothing changed, don't update
+    if (!nodeSummariesChanged && !selectedNodesChanged) return;
+    
+    // Create a new array of nodes with updated data
+    const updatedNodes = nodes.map((node) => {
+      if (node.id === 'central') return node;
+      
+      const summary = nodeSummaries[node.id];
+      const originalLabel = node.data.originalLabel ?? node.data.label;
+      const isSelected = selectedNodes.some((n) => n.id === node.id);
+      
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          label: summary ? `${originalLabel}\n\n${summary}` : originalLabel,
+        },
+        style: isSelected
+          ? selectedNodeStyles
+          : node.id === 'central'
+            ? { ...nodeStyles, background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", border: "2px solid hsl(var(--primary))" }
+            : nodeStyles,
+      };
+    });
+    
+    // Update refs with current values
+    prevNodeSummariesRef.current = { ...nodeSummaries };
+    prevSelectedNodesRef.current = [...selectedNodes];
+    prevNodesRef.current = [...nodes];
+    
+    // Update nodes
+    setNodes(updatedNodes);
   }, [nodeSummaries, selectedNodes, setNodes]);
 
   // Handle node selection
-  const onSelectionChange = useCallback((params: OnSelectionChangeParams) => {
+  const onSelectionChange = useCallback(async (params: OnSelectionChangeParams) => {
     if (!params.nodes.length) {
       setSelectedNodes([]);
       return;
@@ -263,13 +360,42 @@ export const Flow: React.FC = () => {
     const newNode = params.nodes[params.nodes.length - 1] as FlowNode;
     if (!newNode || newNode.id === 'central') return;
 
-    setSelectedNodes((prev) => {
-      if (prev.find((n) => n.id === newNode.id)) {
-        return prev.filter((n) => n.id !== newNode.id);
-      }
-      return [...prev, newNode];
-    });
-  }, []);
+    // Toggle selection in the database
+    try {
+      await selectNode.mutateAsync({
+        nodeId: newNode.data.nodeId!,
+      });
+      
+      // Update local state
+      setSelectedNodes((prev) => {
+        if (prev.find((n) => n.id === newNode.id)) {
+          return prev.filter((n) => n.id !== newNode.id);
+        }
+        return [...prev, newNode];
+      });
+
+      // Update node style directly without triggering a re-render
+      const updatedNode = {
+        ...newNode,
+        style: newNode.style === selectedNodeStyles ? nodeStyles : selectedNodeStyles,
+        data: {
+          ...newNode.data,
+          selected: !newNode.data.selected,
+        },
+      };
+      
+      // Update the node directly in the nodes array
+      setNodes((nds) => 
+        nds.map((node) => node.id === newNode.id ? updatedNode : node)
+      );
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update node selection",
+        variant: "destructive",
+      });
+    }
+  }, [selectNode, setNodes, toast]);
 
   const generateReport = api.report.produceReport.useMutation({
     onSuccess: async () => {
@@ -297,50 +423,46 @@ export const Flow: React.FC = () => {
 
   // Update nodes when search data changes
   useEffect(() => {
-    if (search?.KnowledgeMap?.contents) {
-      const questions = search.KnowledgeMap.contents as string[];
-      const mainTopic = search.name;
-      
-      const centralNode = {
-        id: 'central',
-        type: 'default',
-        position: { x: 300, y: 200 },
-        data: { 
-          label: mainTopic,
-          originalLabel: mainTopic,
-        },
-        style: {
-          ...nodeStyles,
-          background: "hsl(var(--primary))",
-          color: "hsl(var(--primary-foreground))",
-          border: "2px solid hsl(var(--primary))",
-        },
-      };
-
-      const questionNodes = questions.map((question, index) => {
-        const angle = (index * (2 * Math.PI)) / questions.length;
-        const radius = 200;
-        const x = 300 + radius * Math.cos(angle);
-        const y = 200 + radius * Math.sin(angle);
-        
-        return {
-          id: `question-${index}`,
-          type: 'default',
-          position: { x, y },
-          data: { 
-            label: question,
-            originalLabel: question,
-          },
-          style: nodeStyles,
-        };
-      });
-
-      setNodes(
-        [centralNode, ...questionNodes].map((node) => ({
-          ...node,
-          style: node.id === 'central' ? centralNode.style : nodeStyles,
-        })) as FlowNode[],
-      );
+    if (!search?.rootNode) return;
+    
+    const mainTopic = search.query;
+    
+    // Check if we need to update based on changes in search data
+    const searchDataChanged = 
+      !prevNodesRef.current.length || 
+      prevNodesRef.current[0]?.data?.label !== mainTopic ||
+      prevNodesRef.current[0]?.data?.nodeId !== search.rootNode.id;
+    
+    if (!searchDataChanged) return;
+    
+    const centralNode = {
+      id: 'central',
+      type: 'default',
+      position: { x: 300, y: 200 },
+      data: { 
+        label: mainTopic,
+        originalLabel: mainTopic,
+        nodeId: search.rootNode.id,
+        selected: search.rootNode.selected,
+      },
+      style: {
+        ...nodeStyles,
+        background: "hsl(var(--primary))",
+        color: "hsl(var(--primary-foreground))",
+        border: "2px solid hsl(var(--primary))",
+      },
+    };
+    
+    const newNodes = [centralNode].map((node) => ({
+      ...node,
+      style: node.id === 'central' ? centralNode.style : nodeStyles,
+    })) as FlowNode[];
+    
+    setNodes(newNodes);
+    prevNodesRef.current = newNodes;
+    
+    // Only update edges if they've changed
+    if (edges.length === 0 || initialEdges.length !== edges.length) {
       setEdges(initialEdges);
     }
   }, [search, setNodes, setEdges, initialEdges]);
@@ -449,10 +571,10 @@ export const Flow: React.FC = () => {
               <Button
                 onClick={() => {
                   generateReport.mutate({
-                    originalPrompt: search?.name ?? "",
+                    originalPrompt: search?.query ?? "",
                     keywords: selectedNodes.map((n) => n.data.label),
                     prompt,
-                    searchId: params.slug,
+                    searchId: parseInt(params.slug, 10),
                   });
                 }}
                 disabled={
