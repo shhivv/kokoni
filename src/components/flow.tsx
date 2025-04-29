@@ -10,6 +10,7 @@ import {
   Edge,
   Connection,
   Controls,
+  Position,
 } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
  
@@ -41,8 +42,8 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'LR') => 
     const nodeWithPosition = dagreGraph.node(node.id);
     const newNode = {
       ...node,
-      targetPosition:  'right',
-      sourcePosition: 'left',
+      targetPosition: Position.Right,
+      sourcePosition: Position.Left,
       // We are shifting the dagre node position (anchor=center center) to the top left
       // so it matches the React Flow node anchor point (top left).
       position: {
@@ -68,16 +69,22 @@ export const Flow = () => {
   const fetchedNodes = api.search.getAllNodes.useQuery({ searchId: params.slug });
 
   
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   
   // Generate flow elements when search data is available
   useEffect(() => {
     if (search?.rootNode && fetchedNodes?.data) {
-      const { nodes: flowNodes, edges: flowEdges } = generateFlowElements(getNodeWithChildren(search.rootNode.id, fetchedNodes.data));
-      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(flowNodes, flowEdges);
-      setNodes(layoutedNodes);
-      setEdges(layoutedEdges);
+      // We've already checked that rootNode exists
+      const rootNode = search.rootNode as NonNullable<typeof search.rootNode>;
+      // Use type assertion to tell TypeScript this is compatible
+      const nodeWithChildren = getNodeWithChildren(rootNode.id, fetchedNodes.data as any);
+      if (nodeWithChildren) {
+        const { nodes: flowNodes, edges: flowEdges } = generateFlowElements(nodeWithChildren);
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(flowNodes, flowEdges);
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+      }
     }
   }, [search, fetchedNodes.data, setNodes, setEdges]);
  
@@ -91,6 +98,7 @@ export const Flow = () => {
  
   return (
     <div className="floating-edges relative h-full w-full bg-card">
+      
       <ReactFlow
         nodes={nodes}
         edges={edges}
