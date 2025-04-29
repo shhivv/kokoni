@@ -462,7 +462,7 @@ IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestion
       // Fetch the node to verify it exists and get its question
       const node = await ctx.db.node.findUnique({
         where: { id: input.nodeId },
-        select: { id: true, question: true },
+        select: { id: true, question: true, searchId: true },
       });
 
       if (!node) {
@@ -491,6 +491,35 @@ The British Industrial Revolution negatively impacted India, transforming it int
         prompt: summaryPrompt,
       });
 
+      // Generate sub-questions for the node
+      const structurePrompt = `Transform the topic "${node.question}" into two related sub-questions.
+
+Requirements:
+1. Sub-questions should be more specific and explore different aspects
+2. All questions should be clear and concise (5-15 words)
+3. Questions should encourage exploration and discussion
+4. Avoid yes/no questions
+5. Sub-questions should naturally follow from the main question
+
+Example format (DO NOT copy these exact questions, create appropriate ones for the topic):
+{
+  "subQuestions": [
+    "What were the key technological innovations that drove change?",
+    "How did the Industrial Revolution affect social class structures?"
+  ]
+}
+
+IMPORTANT: Return only a valid JSON object with the subQuestions field, without any additional text or explanations.`;
+
+      const subQuestionsResponse = await generateObject({
+        // @ts-expect-error model
+        model: google("gemini-1.5-flash"),
+        schema: z.object({
+          subQuestions: z.array(z.string()),
+        }),
+        prompt: structurePrompt,
+      });
+
       // Update the node to be selected and add summary
       await ctx.db.node.update({
         where: { id: input.nodeId },
@@ -498,6 +527,16 @@ The British Industrial Revolution negatively impacted India, transforming it int
           selected: true,
           summary: summaryResponse.object.summary,
         },
+      });
+
+      // Create two unselected child nodes
+      await ctx.db.node.createMany({
+        data: subQuestionsResponse.object.subQuestions.map(question => ({
+          question: question,
+          parentId: input.nodeId,
+          searchId: node.searchId,
+          selected: false,
+        })),
       });
 
       return { success: true };
