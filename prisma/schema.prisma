@@ -15,61 +15,42 @@ datasource db {
 }
 
 model Node {
-  id        Int     @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   question  String
   summary   String?
-  selected  Boolean @default(false)
+  selected  Boolean  @default(false)
+  includeStats Boolean @default(false)
+  includeImage Boolean @default(false)
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // Parent-child relationships
-  parent    Node?   @relation("NodeHierarchy", fields: [parentId], references: [id])
+  search    Search   @relation("SearchNodes", fields: [searchId], references: [id], onDelete: Cascade)
+  searchId  Int
+  parent    Node?    @relation("NodeToNode", fields: [parentId], references: [id], onDelete: Cascade)
   parentId  Int?
-  children  Node[]  @relation("NodeHierarchy")
-
-  // Search relationship
-  search    Search  @relation(fields: [searchId], references: [id], onDelete: Cascade)
-  searchId  String  @unique
-}
-
-model Report {
-  id        Int     @id @default(autoincrement())
-  updatedAt DateTime @updatedAt
-
-  // Search relationship
-  search    Search  @relation(fields: [searchId], references: [id], onDelete: Cascade)
-  searchId  String  @unique
-
-  // Report blocks
-  blocks    ReportBlock[]
-}
-
-model ReportBlock {
-  id          Int      @id @default(autoincrement())
-  content     String
-  order       Int      // To maintain the sequence of blocks
-  includeStats Boolean  @default(false)  // Whether to include statistics
-  includeImage Boolean  @default(false)  // Whether to include an image
-  updatedAt   DateTime @updatedAt
-
-  // Report relationship
-  report      Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  reportId    Int
+  children  Node[]   @relation("NodeToNode")
+  reportBlock ReportBlock?
+  rootForSearch Search? @relation("RootNode", fields: [rootForSearchId], references: [id])
+  rootForSearchId Int? @unique
 }
 
 model Search {
-  id        String   @id @default(cuid())
-  query      String
+  id        Int      @id @default(autoincrement())
+  query     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  createdBy User     @relation(fields: [createdById], references: [id])
+  createdBy User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
   createdById String
+  rootNode  Node?    @relation("RootNode")
+  nodes     Node[]   @relation("SearchNodes")
+}
 
-  // Root node relationship
-  rootNode  Node?
-  Report    Report?
-
-  @@index([query])
+model ReportBlock {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  node      Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  nodeId    Int      @unique
 }
 
 // Necessary for Next auth
