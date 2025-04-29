@@ -9,6 +9,7 @@ import {
   Node,
   Edge,
   Connection,
+  Controls,
 } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
  
@@ -98,8 +99,12 @@ export const Flow = () => {
         nodeTypes={nodeTypes}
         onConnect={onConnect}
         connectionLineType={ConnectionLineType.SmoothStep}
-        className="bg-background"
+        className="bg-background dark"
+        proOptions={{
+          hideAttribution: true
+        }}
       >
+        <Controls/>
         <MiniMap/>
       </ReactFlow>
     </div>
