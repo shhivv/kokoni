@@ -111,7 +111,7 @@ export function SearchList() {
                   onMouseEnter={() => router.prefetch(`/${search.id}`)}
                 >
                   <Search className="h-4 w-4 text-muted-foreground" />
-                  <span>{search.name}</span>
+                  <span>{search.query}</span>
                 </button>
               </SidebarMenuButton>
             </SidebarMenuItem>
