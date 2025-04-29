@@ -140,14 +140,37 @@ IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestion
 
       const { mainQuestion, subQuestions } = response.object;
 
-      // First create the search
-      const search = await ctx.db.search.create({
+      // Generate summary for the root node
+      const summaryPrompt = `Create a very short summary (max 300 characters) answering this question: "${mainQuestion}"
+
+Requirements:
+1. Be concise
+2. Focus on the key point
+3. Use simple language
+4. Stay under 300 characters
+5. Return only the summary text, no quotes or additional text
+
+Example format:
+The British Industrial Revolution negatively impacted India, transforming it into a supplier of raw materials and a market for British goods, hindering its own industrial development and causing economic exploitation.`;
+
+      const summaryResponse = await generateObject({
+        // @ts-expect-error model
+        model: google("gemini-1.5-flash"),
+        schema: z.object({
+          summary: z.string().max(300),
+        }),
+        prompt: summaryPrompt,
+      });
+
+      return await ctx.db.search.create({
         data: {
           query: input.query,
           createdById: ctx.session.user.id,
           rootNode: {
             create: {
               question: mainQuestion,
+              selected: true,
+              summary: summaryResponse.object.summary,
             },
           },
           Report: {
@@ -166,16 +189,6 @@ IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestion
           },
         },
       });
-
-      // Then create child nodes using the search ID
-      await ctx.db.node.createMany({
-        data: subQuestions.map(question => ({
-          question: question,
-          searchId: search.id,
-        })),
-      });
-
-      return search;
     }),
 
   // DELETE /search/<id>
@@ -273,57 +286,6 @@ IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestion
       });
     }),
 
-  // POST /search/summary
-  summary: protectedProcedure
-    .input(z.object({ 
-      nodeId: z.number(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      // Fetch the node to get its question and check existing summary
-      const node = await ctx.db.node.findUnique({
-        where: { id: input.nodeId },
-        select: { question: true, summary: true },
-      });
-
-      if (!node) {
-        throw new Error("Node not found");
-      }
-
-      // Return existing summary if it exists
-      if (node.summary) {
-        return node.summary;
-      }
-
-      const summaryPrompt = `Create a very short summary (max 300 characters) answering this question: "${node.question}"
-
-Requirements:
-1. Be concise
-2. Focus on the key point
-3. Use simple language
-4. Stay under 300 characters
-5. Return only the summary text, no quotes or additional text
-
-Example format:
-The British Industrial Revolution negatively impacted India, transforming it into a supplier of raw materials and a market for British goods, hindering its own industrial development and causing economic exploitation.`;
-
-      const response = await generateObject({
-        // @ts-expect-error model
-        model: google("gemini-1.5-flash"),
-        schema: z.object({
-          summary: z.string().max(300),
-        }),
-        prompt: summaryPrompt,
-      });
-
-      // Update the node's summary
-      await ctx.db.node.update({
-        where: { id: input.nodeId },
-        data: { summary: response.object.summary },
-      });
-
-      return response.object.summary;
-    }),
-
   // POST /search/node
   addNode: protectedProcedure
     .input(z.object({ 
@@ -341,16 +303,203 @@ The British Industrial Revolution negatively impacted India, transforming it int
         throw new Error("Parent node not found");
       }
 
+      // Generate summary for the new node
+      const summaryPrompt = `Create a very short summary (max 300 characters) answering this question: "${input.question}"
+
+Requirements:
+1. Be concise
+2. Focus on the key point
+3. Use simple language
+4. Stay under 300 characters
+5. Return only the summary text, no quotes or additional text
+
+Example format:
+The British Industrial Revolution negatively impacted India, transforming it into a supplier of raw materials and a market for British goods, hindering its own industrial development and causing economic exploitation.`;
+
+      const summaryResponse = await generateObject({
+        // @ts-expect-error model
+        model: google("gemini-1.5-flash"),
+        schema: z.object({
+          summary: z.string().max(300),
+        }),
+        prompt: summaryPrompt,
+      });
+
       // Create the new node
       return await ctx.db.node.create({
         data: {
           question: input.question,
           parentId: input.parentId,
           searchId: parentNode.searchId,
+          selected: true,
+          summary: summaryResponse.object.summary,
         },
         include: {
           parent: true,
         },
       });
+    }),
+
+  // DELETE /search/node
+  deleteNode: protectedProcedure
+    .input(z.object({ 
+      nodeId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // First verify the node exists and get its search ID
+      const node = await ctx.db.node.findUnique({
+        where: { id: input.nodeId },
+        select: { searchId: true },
+      });
+
+      if (!node) {
+        throw new Error("Node not found");
+      }
+
+      // Delete the node and all its children (cascade will handle this)
+      await ctx.db.node.delete({
+        where: { id: input.nodeId },
+      });
+
+      return { success: true };
+    }),
+
+  // POST /search/node/with-children
+  createNodeWithChildren: protectedProcedure
+    .input(z.object({ 
+      parentId: z.number(),
+      query: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // First verify the parent node exists and get its search ID
+      const existingNode = await ctx.db.node.findUnique({
+        where: { id: input.parentId },
+        select: { searchId: true },
+      });
+
+      if (!existingNode) {
+        throw new Error("Parent node not found");
+      }
+
+      // Search for context
+      const searchResults = await tvly.search(input.query, {
+        options: {
+          searchDepth: "basic",
+          maxResults: 3,
+        },
+      });
+
+      const structurePrompt = `Transform the topic "${input.query}" into a main question and generate two related sub-questions.
+
+Here are some key points to consider:
+${searchResults.results.map((r) => r.content).join("\n")}
+
+Requirements:
+1. Main question should be broad and capture the essence of the topic
+2. Sub-questions should be more specific and explore different aspects
+3. All questions should be clear and concise (5-15 words)
+4. Questions should encourage exploration and discussion
+5. Avoid yes/no questions
+6. Sub-questions should naturally follow from the main question
+
+Example format (DO NOT copy these exact questions, create appropriate ones for the topic):
+{
+  "mainQuestion": "How did the Industrial Revolution transform society?",
+  "subQuestions": [
+    "What were the key technological innovations that drove change?",
+    "How did the Industrial Revolution affect social class structures?"
+  ]
+}
+
+IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestions fields, without any additional text or explanations.`;
+
+      const response = await generateObject({
+        // @ts-expect-error model
+        model: google("gemini-1.5-flash"),
+        schema: z.object({
+          mainQuestion: z.string(),
+          subQuestions: z.array(z.string()),
+        }),
+        prompt: structurePrompt,
+      });
+
+      const { mainQuestion, subQuestions } = response.object;
+
+      // Create the new node
+      const newNode = await ctx.db.node.create({
+        data: {
+          question: mainQuestion,
+          parentId: input.parentId,
+          searchId: existingNode.searchId,
+          selected: false, // Child nodes are not selected by default
+        },
+      });
+
+      // Create child nodes
+      await ctx.db.node.createMany({
+        data: subQuestions.map(question => ({
+          question: question,
+          parentId: newNode.id,
+          searchId: existingNode.searchId,
+          selected: false, // Child nodes are not selected by default
+        })),
+      });
+
+      return await ctx.db.node.findUnique({
+        where: { id: newNode.id },
+        include: {
+          children: true,
+        },
+      });
+    }),
+
+  // POST /search/node/select
+  selectNode: protectedProcedure
+    .input(z.object({ 
+      nodeId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Fetch the node to verify it exists and get its question
+      const node = await ctx.db.node.findUnique({
+        where: { id: input.nodeId },
+        select: { id: true, question: true },
+      });
+
+      if (!node) {
+        throw new Error("Node not found");
+      }
+
+      // Generate summary for the node
+      const summaryPrompt = `Create a very short summary (max 300 characters) answering this question: "${node.question}"
+
+Requirements:
+1. Be concise
+2. Focus on the key point
+3. Use simple language
+4. Stay under 300 characters
+5. Return only the summary text, no quotes or additional text
+
+Example format:
+The British Industrial Revolution negatively impacted India, transforming it into a supplier of raw materials and a market for British goods, hindering its own industrial development and causing economic exploitation.`;
+
+      const summaryResponse = await generateObject({
+        // @ts-expect-error model
+        model: google("gemini-1.5-flash"),
+        schema: z.object({
+          summary: z.string().max(300),
+        }),
+        prompt: summaryPrompt,
+      });
+
+      // Update the node to be selected and add summary
+      await ctx.db.node.update({
+        where: { id: input.nodeId },
+        data: { 
+          selected: true,
+          summary: summaryResponse.object.summary,
+        },
+      });
+
+      return { success: true };
     }),
 });

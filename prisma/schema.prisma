@@ -18,6 +18,7 @@ model Node {
   id        Int     @id @default(autoincrement())
   question  String
   summary   String?
+  selected  Boolean @default(false)
   updatedAt DateTime @updatedAt
 
   // Parent-child relationships
