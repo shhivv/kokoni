@@ -1,17 +1,7 @@
+import { Node } from "~/types/NodeInterface";
 const position = { x: 0, y: 0 };
 const edgeType = 'smoothstep';
  
-// Types based on Prisma schema
-interface Node {
-  id: number;
-  question: string;
-  summary?: string | null;
-  selected: boolean;
-  includeStats: boolean;
-  includeImage: boolean;
-  children: Node[];
-}
-
 /**
  * Generates initialNodes and initialEdges for ReactFlow based on a root node and its children
  * @param rootNode The root node from the Prisma schema
@@ -26,12 +16,8 @@ export const generateFlowElements = (rootNode: Node) => {
   // Create the root node
   const rootFlowNode = {
     id: `node-${rootNode.id}`,
-    type: 'input',
-    data: { 
-      label: rootNode.question,
-      nodeId: rootNode.id,
-      selected: rootNode.selected,
-    },
+    type: 'kokoniNode',
+    data: rootNode,
     position,
   };
   
@@ -47,11 +33,8 @@ export const generateFlowElements = (rootNode: Node) => {
       // Create child node
       const childNode = {
         id: childId,
-        data: { 
-          label: child.question,
-          nodeId: child.id,
-          selected: child.selected,
-        },
+        type: 'kokoniNode',
+        data: child,
         position,
       };
       

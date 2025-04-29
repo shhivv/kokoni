@@ -3,7 +3,7 @@ import {
   ReactFlow,
   addEdge,
   ConnectionLineType,
-  Panel,
+  MiniMap,
   useNodesState,
   useEdgesState,
   Node,
@@ -16,6 +16,7 @@ import '@xyflow/react/dist/style.css';
 import { generateFlowElements } from '~/lib/initialElements';
 import { api } from '~/trpc/react';
 import { useParams } from 'next/navigation';
+import { KokoniNode } from './KokoniNode';
  
 const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
  
@@ -26,7 +27,7 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
   dagreGraph.setGraph({ rankdir: direction });
  
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
+    dagreGraph.setNode(node.id, { width: 400, height: 400 });
   });
  
   edges.forEach((edge) => {
@@ -54,7 +55,9 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
  
   return { nodes: newNodes, edges };
 };
- 
+const nodeTypes = {
+  "kokoniNode": KokoniNode
+}
 export const Flow = () => {
   const params = useParams<{ slug: string }>();
   const { data: search } = api.search.getById.useQuery({
@@ -91,14 +94,13 @@ export const Flow = () => {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        nodeTypes={nodeTypes}
         onConnect={onConnect}
         connectionLineType={ConnectionLineType.SmoothStep}
         fitView
-        proOptions={
-          {hideAttribution: true}
-        }
         className="bg-background"
       >
+        <MiniMap/>
       </ReactFlow>
     </div>
   );

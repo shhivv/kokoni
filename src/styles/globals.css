@@ -102,7 +102,7 @@
     @apply bg-background text-foreground;
   }
 }
-
+/* 
 .floating-edges {
   flex-direction: column;
   display: flex;
@@ -112,6 +112,19 @@
  
 .floating-edges .react-flow__handle {
   opacity: 0;
+} */
+
+.react-flow__node-kokoniNode {
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.react-flow__node.selectable:focus {
+  box-shadow: none;
+  border: none;
 }
 
 .image-background-main {

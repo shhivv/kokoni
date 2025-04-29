@@ -565,6 +565,8 @@ IMPORTANT: Return only a valid JSON object with the subQuestions field, without 
         })),
       });
 
-      return { success: true };
+      return { 
+        success: true,
+      };
     }),
 });
