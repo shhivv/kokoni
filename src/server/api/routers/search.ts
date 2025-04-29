@@ -24,11 +24,6 @@ export const searchRouter = createTRPCRouter({
             children: true,
           },
         },
-        Report: {
-          include: {
-            blocks: true,
-          },
-        },
       },
       orderBy: {
         updatedAt: "desc",
@@ -51,11 +46,6 @@ export const searchRouter = createTRPCRouter({
               children: true,
             },
           },
-          Report: {
-            include: {
-              blocks: true,
-            },
-          },
         },
       });
 
@@ -76,16 +66,6 @@ export const searchRouter = createTRPCRouter({
         },
         select: {
           query: true,
-          Report: {
-            select: {
-              blocks: {
-                select: {
-                  content: true,
-                  updatedAt: true,
-                },
-              },
-            },
-          },
         },
       });
 
@@ -173,13 +153,15 @@ IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestion
           Report: {
             create: {
               blocks: {
-                create: {
-                  content: "Initial report block",
-                  order: 0,
-                  includeStats: false,
-                  includeImage: false,
-                },
+                create: [],
               },
+            },
+          },
+        },
+        include: {
+          rootNode: {
+            include: {
+              children: true,
             },
           },
         },
@@ -233,12 +215,6 @@ IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestion
             question: z.string(),
           })),
         }).optional(),
-        report: z.array(z.object({
-          content: z.string(),
-          order: z.number(),
-          includeStats: z.boolean(),
-          includeImage: z.boolean(),
-        })).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -283,31 +259,6 @@ IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestion
           });
         }
 
-        // Update report blocks if provided
-        if (input.report) {
-          const reportId = (await tx.report.findUnique({
-            where: { searchId: input.id },
-            select: { id: true },
-          }))?.id;
-
-          if (!reportId) {
-            throw new Error("Report not found");
-          }
-
-          await tx.reportBlock.deleteMany({
-            where: { reportId },
-          });
-          await tx.reportBlock.createMany({
-            data: input.report.map(block => ({
-              content: block.content,
-              order: block.order,
-              includeStats: block.includeStats,
-              includeImage: block.includeImage,
-              reportId,
-            })),
-          });
-        }
-
         // Return updated search with all relations
         return await tx.search.findUnique({
           where: { id: input.id },
@@ -317,11 +268,6 @@ IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestion
                 children: true,
               },
             },
-            Report: {
-              include: {
-                blocks: true,
-              },
-            },
           },
         });
       });
@@ -329,9 +275,26 @@ IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestion
 
   // POST /search/summary
   summary: protectedProcedure
-    .input(z.object({ question: z.string() }))
-    .mutation(async ({ input }) => {
-      const summaryPrompt = `Create a very short summary (max 300 characters) answering this question: "${input.question}"
+    .input(z.object({ 
+      nodeId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // Fetch the node to get its question and check existing summary
+      const node = await ctx.db.node.findUnique({
+        where: { id: input.nodeId },
+        select: { question: true, summary: true },
+      });
+
+      if (!node) {
+        throw new Error("Node not found");
+      }
+
+      // Return existing summary if it exists
+      if (node.summary) {
+        return node.summary;
+      }
+
+      const summaryPrompt = `Create a very short summary (max 300 characters) answering this question: "${node.question}"
 
 Requirements:
 1. Be concise
@@ -352,6 +315,42 @@ The British Industrial Revolution negatively impacted India, transforming it int
         prompt: summaryPrompt,
       });
 
+      // Update the node's summary
+      await ctx.db.node.update({
+        where: { id: input.nodeId },
+        data: { summary: response.object.summary },
+      });
+
       return response.object.summary;
+    }),
+
+  // POST /search/node
+  addNode: protectedProcedure
+    .input(z.object({ 
+      parentId: z.number(),
+      question: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      // First verify the parent node exists and get its search ID
+      const parentNode = await ctx.db.node.findUnique({
+        where: { id: input.parentId },
+        select: { searchId: true },
+      });
+
+      if (!parentNode) {
+        throw new Error("Parent node not found");
+      }
+
+      // Create the new node
+      return await ctx.db.node.create({
+        data: {
+          question: input.question,
+          parentId: input.parentId,
+          searchId: parentNode.searchId,
+        },
+        include: {
+          parent: true,
+        },
+      });
     }),
 });
