@@ -13,7 +13,7 @@ export const reportRouter = createTRPCRouter({
         originalPrompt: z.string(),
         keywords: z.array(z.string()),
         prompt: z.string().optional(),
-        searchId: z.string(),
+        searchId: z.number(),
         includeStats: z.boolean().default(false),
         includeWeb: z.boolean().default(false),
       }),
@@ -76,10 +76,29 @@ The report should synthesize the information and make connections between the to
         fullText += cleanChunk;
       }
 
-      await ctx.db.report.update({
-        where: { searchId: input.searchId },
-        data: {
-          contents: fullText,
+      // Find the root node for this search
+      const rootNode = await ctx.db.node.findFirst({
+        where: { 
+          rootForSearchId: input.searchId 
+        },
+        select: { id: true }
+      });
+
+      if (!rootNode) {
+        throw new Error("Root node not found for this search");
+      }
+
+      // Create or update the report block for the root node
+      await ctx.db.reportBlock.upsert({
+        where: { 
+          nodeId: rootNode.id 
+        },
+        create: {
+          content: fullText,
+          nodeId: rootNode.id,
+        },
+        update: {
+          content: fullText,
         },
       });
 

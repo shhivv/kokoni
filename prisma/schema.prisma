@@ -42,6 +42,7 @@ model Search {
   createdById String
   rootNode  Node?    @relation("RootNode")
   nodes     Node[]   @relation("SearchNodes")
+  sources   Source[]
 }
 
 model ReportBlock {
@@ -51,6 +52,19 @@ model ReportBlock {
   updatedAt DateTime @updatedAt
   node      Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
   nodeId    Int      @unique
+  sources   Source[] @relation("ReportBlockSources")
+}
+
+model Source {
+  id        Int      @id @default(autoincrement())
+  title     String
+  url       String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  search    Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  searchId  Int
+  reportBlocks ReportBlock[] @relation("ReportBlockSources")
 }
 
 // Necessary for Next auth

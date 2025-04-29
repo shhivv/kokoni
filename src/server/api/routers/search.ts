@@ -33,7 +33,7 @@ export const searchRouter = createTRPCRouter({
 
   // GET /search/<id> (protected)
   getById: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
       const search = await ctx.db.search.findUnique({
         where: {
@@ -58,7 +58,7 @@ export const searchRouter = createTRPCRouter({
 
   // GET /search/<id> (public)
   getByIdPublic: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
       const search = await ctx.db.search.findUnique({
         where: {
@@ -162,7 +162,8 @@ The British Industrial Revolution negatively impacted India, transforming it int
         prompt: summaryPrompt,
       });
 
-      return await ctx.db.search.create({
+      // Create the search with root node
+      const search = await ctx.db.search.create({
         data: {
           query: input.query,
           createdById: ctx.session.user.id,
@@ -171,12 +172,10 @@ The British Industrial Revolution negatively impacted India, transforming it int
               question: mainQuestion,
               selected: true,
               summary: summaryResponse.object.summary,
-            },
-          },
-          Report: {
-            create: {
-              blocks: {
-                create: [],
+              search: {
+                connect: {
+                  id: undefined, // This will be set automatically by Prisma
+                },
               },
             },
           },
@@ -189,11 +188,22 @@ The British Industrial Revolution negatively impacted India, transforming it int
           },
         },
       });
+
+      // Create child nodes
+      await ctx.db.node.createMany({
+        data: subQuestions.map(question => ({
+          question: question,
+          searchId: search.id,
+          selected: false,
+        })),
+      });
+
+      return search;
     }),
 
   // DELETE /search/<id>
   delete: protectedProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const search = await ctx.db.search.findUnique({
         where: {
@@ -220,7 +230,7 @@ The British Industrial Revolution negatively impacted India, transforming it int
   update: protectedProcedure
     .input(
       z.object({
-        id: z.string(),
+        id: z.number(),
         query: z.string().optional(),
         rootNode: z.object({
           question: z.string(),
@@ -258,14 +268,14 @@ The British Industrial Revolution negatively impacted India, transforming it int
         // Update root node if provided
         if (input.rootNode) {
           await tx.node.update({
-            where: { searchId: input.id },
+            where: { rootForSearchId: input.id },
             data: {
               question: input.rootNode.question,
               children: {
                 deleteMany: {},
                 create: input.rootNode.children.map(child => ({
                   question: child.question,
-                  search: { connect: { id: input.id } },
+                  searchId: input.id,
                 })),
               },
             },
