@@ -1,25 +1,28 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Background,
   ReactFlow,
   addEdge,
   ConnectionLineType,
   Panel,
   useNodesState,
   useEdgesState,
+  Node,
+  Edge,
+  Connection,
 } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
  
 import '@xyflow/react/dist/style.css';
- 
-import { initialNodes, initialEdges } from '~/lib/initialElements';
+import { generateFlowElements } from '~/lib/initialElements';
+import { api } from '~/trpc/react';
+import { useParams } from 'next/navigation';
  
 const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
  
 const nodeWidth = 172;
 const nodeHeight = 36;
  
-const getLayoutedElements = (nodes, edges, direction = 'TB') => {
+const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
   dagreGraph.setGraph({ rankdir: direction });
  
   nodes.forEach((node) => {
@@ -52,40 +55,51 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
   return { nodes: newNodes, edges };
 };
  
-const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
-  initialNodes,
-  initialEdges,
-);
- 
 export const Flow = () => {
-  const [nodes, _setNodes, onNodesChange] = useNodesState(layoutedNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
+  const params = useParams<{ slug: string }>();
+  const { data: search } = api.search.getById.useQuery({
+    id: params.slug,
+  });
+
+  
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
+  
+  // Generate flow elements when search data is available
+  useEffect(() => {
+    if (search?.rootNode) {
+      const { nodes: flowNodes, edges: flowEdges } = generateFlowElements(search.rootNode);
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(flowNodes, flowEdges);
+      setNodes(layoutedNodes);
+      console.log(search);
+      setEdges(layoutedEdges);
+    }
+  }, [search, setNodes, setEdges]);
  
   const onConnect = useCallback(
-    (params) =>
+    (params: Connection) =>
       setEdges((eds) =>
         addEdge({ ...params, type: ConnectionLineType.SmoothStep, animated: true }, eds),
       ),
-    [],
+    [setEdges],
   );
  
   return (
-
     <div className="floating-edges relative h-full w-full bg-card">
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={onConnect}
-      connectionLineType={ConnectionLineType.SmoothStep}
-      fitView
-      proOptions={
-        {hideAttribution: true}
-      }
-      className="bg-background"
-    >
-    </ReactFlow>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        connectionLineType={ConnectionLineType.SmoothStep}
+        fitView
+        proOptions={
+          {hideAttribution: true}
+        }
+        className="bg-background"
+      >
+      </ReactFlow>
     </div>
   );
 };

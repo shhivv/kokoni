@@ -169,16 +169,6 @@ The British Industrial Revolution negatively impacted India, transforming it int
           createdById: ctx.session.user.id,
         },
       });
-
-      // Create child nodes
-      await ctx.db.node.createMany({
-        data: subQuestions.map(question => ({
-          question: question,
-          searchId: search.id,
-          selected: false,
-        })),
-      });
-
       // Create root node and connect it to the search
       const rootNode = await ctx.db.node.create({
         data: {
@@ -193,6 +183,16 @@ The British Industrial Revolution negatively impacted India, transforming it int
         },
       });
 
+      // create child nodes
+      await ctx.db.node.createMany({
+        data: subQuestions.map(question => ({
+          question: question,
+          searchId: search.id,
+          selected: false,
+          parentId: rootNode.id
+        })),
+      });
+      
       // Update the search to connect it with the root node
       const updatedSearch = await ctx.db.search.update({
         where: {
