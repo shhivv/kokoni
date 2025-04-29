@@ -21,14 +21,13 @@ import { getNodeWithChildren } from '~/lib/generateHierarchy';
  
 const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
  
-const nodeWidth = 172;
-const nodeHeight = 36;
- 
+const nodeWidth = 320
+const nodeHeight = 172 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'LR') => {
   dagreGraph.setGraph({ rankdir: direction });
  
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: 200, height: 200 });
+    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
   });
  
   edges.forEach((edge) => {
@@ -99,7 +98,6 @@ export const Flow = () => {
         nodeTypes={nodeTypes}
         onConnect={onConnect}
         connectionLineType={ConnectionLineType.SmoothStep}
-        fitView
         className="bg-background"
       >
         <MiniMap/>
