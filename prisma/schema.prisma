@@ -14,38 +14,61 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model KnowledgeMap {
-  id       Int  @id @default(autoincrement())
-  contents Json
+model Node {
+  id        Int     @id @default(autoincrement())
+  question  String
+  summary   String?
   updatedAt DateTime @updatedAt
 
-  search   Search @relation(fields: [searchId], references: [id], onDelete: Cascade)
-  searchId String @unique
+  // Parent-child relationships
+  parent    Node?   @relation("NodeHierarchy", fields: [parentId], references: [id])
+  parentId  Int?
+  children  Node[]  @relation("NodeHierarchy")
+
+  // Search relationship
+  search    Search  @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  searchId  String  @unique
 }
 
 model Report {
-  id       Int  @id @default(autoincrement())
-  contents String
+  id        Int     @id @default(autoincrement())
   updatedAt DateTime @updatedAt
 
-  search   Search @relation(fields: [searchId], references: [id], onDelete: Cascade)
-  searchId String @unique
+  // Search relationship
+  search    Search  @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  searchId  String  @unique
+
+  // Report blocks
+  blocks    ReportBlock[]
+}
+
+model ReportBlock {
+  id          Int      @id @default(autoincrement())
+  content     String
+  order       Int      // To maintain the sequence of blocks
+  includeStats Boolean  @default(false)  // Whether to include statistics
+  includeImage Boolean  @default(false)  // Whether to include an image
+  updatedAt   DateTime @updatedAt
+
+  // Report relationship
+  report      Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  reportId    Int
 }
 
 model Search {
   id        String   @id @default(cuid())
-  name      String
+  query      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  additionalInstruction String
-  
-  createdBy    User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  createdById  String
-  KnowledgeMap KnowledgeMap?
-  Report       Report?
+  createdBy User     @relation(fields: [createdById], references: [id])
+  createdById String
 
-  @@index([name])
+  // Root node relationship
+  rootNode  Node?
+  Report    Report?
+
+  @@index([query])
 }
 
 // Necessary for Next auth

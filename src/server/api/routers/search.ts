@@ -19,8 +19,16 @@ export const searchRouter = createTRPCRouter({
         createdById: ctx.session.user.id,
       },
       include: {
-        KnowledgeMap: true,
-        Report: true,
+        rootNode: {
+          include: {
+            children: true,
+          },
+        },
+        Report: {
+          include: {
+            blocks: true,
+          },
+        },
       },
       orderBy: {
         updatedAt: "desc",
@@ -38,11 +46,14 @@ export const searchRouter = createTRPCRouter({
           createdById: ctx.session.user.id,
         },
         include: {
-          KnowledgeMap: true,
+          rootNode: {
+            include: {
+              children: true,
+            },
+          },
           Report: {
-            select: {
-              contents: true,
-              updatedAt: true,
+            include: {
+              blocks: true,
             },
           },
         },
@@ -64,11 +75,15 @@ export const searchRouter = createTRPCRouter({
           id: input.id,
         },
         select: {
-          name: true,
+          query: true,
           Report: {
             select: {
-              contents: true,
-              updatedAt: true,
+              blocks: {
+                select: {
+                  content: true,
+                  updatedAt: true,
+                },
+              },
             },
           },
         },
@@ -85,88 +100,100 @@ export const searchRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        name: z.string().min(1),
-        additionalInstruction: z.string().default(""),
+        query: z.string().min(1),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const userSearches = await ctx.db.search.count({
         where: {
           createdById: ctx.session.user.id,
+          createdAt: {
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+          },
         },
       });
 
       if (userSearches >= 5) {
-        throw new Error("You have reached the maximum number of searches");
+        throw new Error("You have reached the maximum number of searches for today");
       }
 
-      // Use Groq to structure the knowledge map
-      const search = await tvly.search(input.name, {
+      const searchResults = await tvly.search(input.query, {
         options: {
           searchDepth: "basic",
-          maxResults: 1,
+          maxResults: 3,
         },
       });
-      const structurePrompt = `Generate three short, focused follow-up questions about the topic: "${input.name}" 
+
+      const structurePrompt = `Transform the topic "${input.query}" into a main question and generate two related sub-questions.
 
 Here are some key points to consider:
-${search.results.map((r) => r.content).join("\n")}
+${searchResults.results.map((r) => r.content).join("\n")}
 
-The questions should:
-1. Be short and concise (aim for 5-10 words)
-2. Focus on one specific aspect of the topic
-3. Be easy to understand at a glance
-4. Be relevant to the topic
-5. Encourage exploration and discussion
-6. Avoid yes/no questions
-
-Additional instructions: ${input.additionalInstruction}
+Requirements:
+1. Main question should be broad and capture the essence of the topic
+2. Sub-questions should be more specific and explore different aspects
+3. All questions should be clear and concise (5-15 words)
+4. Questions should encourage exploration and discussion
+5. Avoid yes/no questions
+6. Sub-questions should naturally follow from the main question
 
 Example format (DO NOT copy these exact questions, create appropriate ones for the topic):
-[
-  "What started the Industrial Revolution?",
-  "How did workers' lives change?",
-  "What were the environmental effects?"
-]
+{
+  "mainQuestion": "How did the Industrial Revolution transform society?",
+  "subQuestions": [
+    "What were the key technological innovations that drove change?",
+    "How did the Industrial Revolution affect social class structures?"
+  ]
+}
 
-IMPORTANT: Return only the array of 3 questions as a valid JSON array without any additional text, explanations, or code blocks.`;
-      const startTime = performance.now();
+IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestions fields, without any additional text or explanations.`;
+
       const response = await generateObject({
-        // @ts-expect-error model xai
+        // @ts-expect-error model
         model: google("gemini-1.5-flash"),
         schema: z.object({
-          questions: z.array(z.string()),
+          mainQuestion: z.string(),
+          subQuestions: z.array(z.string()),
         }),
         prompt: structurePrompt,
       });
-      const endTime = performance.now();
-      console.log(
-        `generateObject call took ${(endTime - startTime) / 1000} seconds`,
-      );
 
-      const questions = response.object.questions;
+      const { mainQuestion, subQuestions } = response.object;
 
-      return await ctx.db.search.create({
+      // First create the search
+      const search = await ctx.db.search.create({
         data: {
-          name: input.name,
-          additionalInstruction: input.additionalInstruction,
+          query: input.query,
           createdById: ctx.session.user.id,
-          KnowledgeMap: {
+          rootNode: {
             create: {
-              contents: questions,
+              question: mainQuestion,
             },
           },
           Report: {
             create: {
-              contents: "No report available yet.",
+              blocks: {
+                create: {
+                  content: "Initial report block",
+                  order: 0,
+                  includeStats: false,
+                  includeImage: false,
+                },
+              },
             },
           },
         },
-        include: {
-          KnowledgeMap: true,
-          Report: true,
-        },
       });
+
+      // Then create child nodes using the search ID
+      await ctx.db.node.createMany({
+        data: subQuestions.map(question => ({
+          question: question,
+          searchId: search.id,
+        })),
+      });
+
+      return search;
     }),
 
   // DELETE /search/<id>
@@ -199,10 +226,19 @@ IMPORTANT: Return only the array of 3 questions as a valid JSON array without an
     .input(
       z.object({
         id: z.string(),
-        name: z.string().optional(),
-        additionalInstruction: z.string().optional(),
-        knowledgeMap: z.record(z.any()).optional(),
-        report: z.record(z.any()).optional(),
+        query: z.string().optional(),
+        rootNode: z.object({
+          question: z.string(),
+          children: z.array(z.object({
+            question: z.string(),
+          })),
+        }).optional(),
+        report: z.array(z.object({
+          content: z.string(),
+          order: z.number(),
+          includeStats: z.boolean(),
+          includeImage: z.boolean(),
+        })).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -221,33 +257,54 @@ IMPORTANT: Return only the array of 3 questions as a valid JSON array without an
       // Update search and related records
       return await ctx.db.$transaction(async (tx) => {
         // Update search basic info if provided
-        if (input.name || input.additionalInstruction) {
+        if (input.query) {
           await tx.search.update({
             where: { id: input.id },
             data: {
-              name: input.name,
-              additionalInstruction: input.additionalInstruction,
+              query: input.query,
             },
           });
         }
 
-        // Update knowledge map if provided
-        if (input.knowledgeMap) {
-          await tx.knowledgeMap.update({
+        // Update root node if provided
+        if (input.rootNode) {
+          await tx.node.update({
             where: { searchId: input.id },
             data: {
-              contents: input.knowledgeMap,
+              question: input.rootNode.question,
+              children: {
+                deleteMany: {},
+                create: input.rootNode.children.map(child => ({
+                  question: child.question,
+                  search: { connect: { id: input.id } },
+                })),
+              },
             },
           });
         }
 
-        // Update report if provided
+        // Update report blocks if provided
         if (input.report) {
-          await tx.report.update({
+          const reportId = (await tx.report.findUnique({
             where: { searchId: input.id },
-            data: {
-              contents: input.report,
-            },
+            select: { id: true },
+          }))?.id;
+
+          if (!reportId) {
+            throw new Error("Report not found");
+          }
+
+          await tx.reportBlock.deleteMany({
+            where: { reportId },
+          });
+          await tx.reportBlock.createMany({
+            data: input.report.map(block => ({
+              content: block.content,
+              order: block.order,
+              includeStats: block.includeStats,
+              includeImage: block.includeImage,
+              reportId,
+            })),
           });
         }
 
@@ -255,8 +312,16 @@ IMPORTANT: Return only the array of 3 questions as a valid JSON array without an
         return await tx.search.findUnique({
           where: { id: input.id },
           include: {
-            KnowledgeMap: true,
-            Report: true,
+            rootNode: {
+              include: {
+                children: true,
+              },
+            },
+            Report: {
+              include: {
+                blocks: true,
+              },
+            },
           },
         });
       });
@@ -266,23 +331,23 @@ IMPORTANT: Return only the array of 3 questions as a valid JSON array without an
   summary: protectedProcedure
     .input(z.object({ question: z.string() }))
     .mutation(async ({ input }) => {
-      const summaryPrompt = `Create a very short summary (max 100 characters) answering this question: "${input.question}"
+      const summaryPrompt = `Create a very short summary (max 300 characters) answering this question: "${input.question}"
 
 Requirements:
-1. Be extremely concise
+1. Be concise
 2. Focus on the key point
 3. Use simple language
-4. Stay under 100 characters
+4. Stay under 300 characters
 5. Return only the summary text, no quotes or additional text
 
 Example format:
-The Industrial Revolution began with steam power and mechanization, transforming manufacturing and society.`;
+The British Industrial Revolution negatively impacted India, transforming it into a supplier of raw materials and a market for British goods, hindering its own industrial development and causing economic exploitation.`;
 
       const response = await generateObject({
-        // @ts-expect-error model xai
+        // @ts-expect-error model
         model: google("gemini-1.5-flash"),
         schema: z.object({
-          summary: z.string().max(100),
+          summary: z.string().max(300),
         }),
         prompt: summaryPrompt,
       });
