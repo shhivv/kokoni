@@ -17,17 +17,18 @@ import { generateFlowElements } from '~/lib/initialElements';
 import { api } from '~/trpc/react';
 import { useParams } from 'next/navigation';
 import { KokoniNode } from './KokoniNode';
+import { getNodeWithChildren } from '~/lib/generateHierarchy';
  
 const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
  
 const nodeWidth = 172;
 const nodeHeight = 36;
  
-const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
+const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'LR') => {
   dagreGraph.setGraph({ rankdir: direction });
  
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: 400, height: 400 });
+    dagreGraph.setNode(node.id, { width: 200, height: 200 });
   });
  
   edges.forEach((edge) => {
@@ -40,8 +41,8 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
     const nodeWithPosition = dagreGraph.node(node.id);
     const newNode = {
       ...node,
-      targetPosition:  'top',
-      sourcePosition: 'bottom',
+      targetPosition:  'right',
+      sourcePosition: 'left',
       // We are shifting the dagre node position (anchor=center center) to the top left
       // so it matches the React Flow node anchor point (top left).
       position: {
@@ -64,20 +65,21 @@ export const Flow = () => {
     id: params.slug,
   });
 
+  const fetchedNodes = api.search.getAllNodes.useQuery({ searchId: params.slug });
+
   
   const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
   
   // Generate flow elements when search data is available
   useEffect(() => {
-    if (search?.rootNode) {
-      const { nodes: flowNodes, edges: flowEdges } = generateFlowElements(search.rootNode);
+    if (search?.rootNode && fetchedNodes?.data) {
+      const { nodes: flowNodes, edges: flowEdges } = generateFlowElements(getNodeWithChildren(search.rootNode.id, fetchedNodes.data));
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(flowNodes, flowEdges);
       setNodes(layoutedNodes);
-      console.log(search);
       setEdges(layoutedEdges);
     }
-  }, [search, setNodes, setEdges]);
+  }, [search, fetchedNodes.data, setNodes, setEdges]);
  
   const onConnect = useCallback(
     (params: Connection) =>

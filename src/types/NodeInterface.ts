@@ -1,5 +1,6 @@
 export interface Node {
   id: number;
+  parentId?: number;
   question: string;
   summary?: string | null;
   selected: boolean;

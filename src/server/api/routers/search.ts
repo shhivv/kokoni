@@ -569,4 +569,36 @@ IMPORTANT: Return only a valid JSON object with the subQuestions field, without 
         success: true,
       };
     }),
+
+  // GET /search/<id>/nodes
+  getAllNodes: protectedProcedure
+    .input(z.object({ searchId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      // First verify the search exists and belongs to the user
+      const search = await ctx.db.search.findUnique({
+        where: {
+          id: input.searchId,
+          createdById: ctx.session.user.id,
+        },
+      });
+
+      if (!search) {
+        throw new Error("Search not found or unauthorized");
+      }
+
+      // Get all nodes for this search
+      const nodes = await ctx.db.node.findMany({
+        where: {
+          searchId: input.searchId,
+        },
+        include: {
+          children: true,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
+
+      return nodes;
+    }),
 });
