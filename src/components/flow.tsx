@@ -171,7 +171,70 @@ export const Flow = () => {
       setEdges(layoutedEdges);
 
       // Call the API to get real nodes
-      await selectNode.mutateAsync({ nodeId });
+      // what is subNodes?
+      const { subNodes, summary } = await selectNode.mutateAsync({ nodeId });
+      console.log(subNodes);
+    
+      // Update the nodes with the real data
+      setNodes((currentNodes) => {
+        return currentNodes.map((node) => {
+          // Update the parent node with the summary
+          if (node.id === `node-${nodeId}`) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                summary,
+                isLoading: false
+              }
+            };
+          }
+          // Update the skeleton nodes with the subNodes data
+          if (node.id === `skeleton-1-${nodeId}`) {
+            return {
+              ...node,
+              id: `node-${subNodes[0]?.id}`,
+              data: {
+                ...subNodes[0],
+                isLoading: false
+              }
+            };
+          }
+          if (node.id === `skeleton-2-${nodeId}`) {
+            return {
+              ...node,
+              id: `node-${subNodes[1]?.id}`,
+              data: {
+                ...subNodes[1],
+                isLoading: false
+              }
+            };
+          }
+          return node;
+        });
+      });
+      
+      // Update the edges to match the new node IDs
+      setEdges((currentEdges) => {
+        return currentEdges.map((edge) => {
+          // Update edges connected to skeleton nodes
+          if (edge.target === `skeleton-1-${nodeId}`) {
+            return {
+              ...edge,
+              id: `edge-${edge.source}-node-${subNodes[0]?.id}`,
+              target: `node-${subNodes[0]?.id}`
+            };
+          }
+          if (edge.target === `skeleton-2-${nodeId}`) {
+            return {
+              ...edge,
+              id: `edge-${edge.source}-node-${subNodes[1]?.id}`,
+              target: `node-${subNodes[1]?.id}`
+            };
+          }
+          return edge;
+        });
+      });
       
     } catch (error) {
       console.error('Failed to select node:', error);

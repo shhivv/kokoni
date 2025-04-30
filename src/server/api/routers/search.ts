@@ -560,7 +560,7 @@ IMPORTANT: Return only a valid JSON object with the subQuestions field, without 
       });
 
       // Create two unselected child nodes
-      await ctx.db.node.createMany({
+      const subNodes = await ctx.db.node.createManyAndReturn({
         data: subQuestionsResponse.object.subQuestions.map(question => ({
           question: question,
           parentId: input.nodeId,
@@ -571,6 +571,8 @@ IMPORTANT: Return only a valid JSON object with the subQuestions field, without 
 
       return { 
         success: true,
+        subNodes: subNodes,
+        summary: summaryResponse.object.summary,
       };
     }),
 
