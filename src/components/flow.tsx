@@ -379,7 +379,7 @@ export const Flow = () => {
                 )}
                 onClick={setSelectedOnly}
               >
-                {showSelectedOnly ? <Eye/> : <EyeClosed/>}
+                {showSelectedOnly ? <EyeClosed/> : <Eye/>}
               </Button>
               <div className="mx-2 h-8 w-px bg-border" />
               <Button
