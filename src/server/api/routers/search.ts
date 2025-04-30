@@ -377,22 +377,40 @@ The British Industrial Revolution negatively impacted India, transforming it int
       nodeId: z.number(),
     }))
     .mutation(async ({ ctx, input }) => {
-      // First verify the node exists and get its search ID
+      // First verify the node exists and get its search ID and relationships
       const node = await ctx.db.node.findUnique({
         where: { id: input.nodeId },
-        select: { searchId: true },
+        include: {
+          parent: true,
+          children: true,
+        },
       });
 
       if (!node) {
         throw new Error("Node not found");
       }
 
-      // Delete the node and all its children (cascade will handle this)
-      await ctx.db.node.delete({
-        where: { id: input.nodeId },
-      });
+      // Update the parent-child relationships in a transaction
+      return await ctx.db.$transaction(async (tx) => {
+        // For each child node, update its parent to be the deleted node's parent
+        if (node.children.length > 0) {
+          for (const child of node.children) {
+            await tx.node.update({
+              where: { id: child.id },
+              data: { 
+                parentId: node.parent?.id ?? null,
+              },
+            });
+          }
+        }
 
-      return { success: true };
+        // Delete the node
+        await tx.node.delete({
+          where: { id: input.nodeId },
+        });
+
+        return { success: true };
+      });
     }),
 
   // POST /search/node/with-children

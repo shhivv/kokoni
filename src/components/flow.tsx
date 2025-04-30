@@ -109,6 +109,7 @@ export const Flow = () => {
 
   const { data: fetchedNodes, isLoading: isNodesLoading } = api.search.getAllNodes.useQuery({ searchId: params.slug });
   const selectNode = api.search.selectNode.useMutation();
+  const deleteNode = api.search.deleteNode.useMutation();
 
   const isLoading = isSearchLoading || isNodesLoading;
   const [prompt, setPrompt] = useState('');
@@ -161,7 +162,18 @@ export const Flow = () => {
     [nodes, edges, setNodes, setEdges, showSelectedOnly, search, fetchedNodes],
   );
   const onNodesDelete = useCallback(
-    (deleted: Node[]) => {
+    async (deleted: Node[]) => {
+      // Call the API to delete each node
+      for (const node of deleted) {
+        const nodeId = Number(node.id.split("-")[1]);
+        try {
+          await deleteNode.mutateAsync({ nodeId });
+        } catch (error) {
+          console.error('Failed to delete node:', error);
+        }
+      }
+
+      // Update the edges in the UI
       setEdges(
         deleted.reduce((acc, node) => {
           const incomers = getIncomers(node, nodes, edges);
@@ -184,7 +196,7 @@ export const Flow = () => {
         }, edges),
       );
     },
-    [nodes, edges],
+    [nodes, edges, deleteNode],
   );
   // Handle node selection
   const onNodeClick = useCallback(async (event: React.MouseEvent, node: Node) => {
