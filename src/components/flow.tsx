@@ -160,6 +160,9 @@ export const Flow = () => {
 
   // Handle node selection
   const onNodeClick = useCallback(async (event: React.MouseEvent, node: Node) => {
+    if (node.data.selected) {
+      return;
+    }
     try {
       // Immediately add two skeleton nodes
       const nodeId = Number(node.id.split("-")[1]);
