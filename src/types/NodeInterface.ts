@@ -6,6 +6,7 @@ export interface Node {
   selected: boolean;
   includeStats: boolean;
   includeImage: boolean;
+  includeVerbose: boolean;
   children?: Node[];
   searchId?: string;
   createdAt?: Date;

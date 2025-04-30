@@ -230,6 +230,7 @@ export const Flow = () => {
             selected: false,
             includeStats: false,
             includeImage: false,
+            includeVerbose: false,
           },
           position: { x: 0, y: 0 }, // Position will be set by layout
         },
@@ -243,6 +244,7 @@ export const Flow = () => {
             selected: false,
             includeStats: false,
             includeImage: false,
+            includeVerbose: false,
           },
           position: { x: 0, y: 0 }, // Position will be set by layout
         },

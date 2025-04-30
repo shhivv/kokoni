@@ -21,6 +21,7 @@ model Node {
   selected      Boolean  @default(false)
   includeStats  Boolean @default(false)
   includeImage  Boolean @default(false)
+  includeVerbose Boolean @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   search        Search   @relation("SearchNodes", fields: [searchId], references: [id], onDelete: Cascade)
