@@ -13,9 +13,9 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   try {
-    const search = await api.search.getById({ id: slug });
+    const { title} = await api.search.getById({ id: slug });
     return {
-      title: search.query,
+      title
     };
   } catch (error) {
     return {
