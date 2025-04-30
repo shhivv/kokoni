@@ -102,6 +102,7 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  pro           Boolean   @default(false)
   accounts      Account[]
   sessions      Session[]
   searches      Search[]

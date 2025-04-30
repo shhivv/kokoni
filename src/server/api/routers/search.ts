@@ -93,7 +93,8 @@ export const searchRouter = createTRPCRouter({
         },
       });
 
-      if (userSearches >= 5) {
+      const limit = ctx.session.user.pro ? 50 : 5;
+      if (userSearches >= limit) {
         throw new Error("You have reached the maximum number of searches for today");
       }
 
