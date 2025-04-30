@@ -11,6 +11,8 @@ import {
   Connection,
   Controls,
   Position,
+  useReactFlow,
+  ReactFlowProvider,
 } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
  
@@ -103,7 +105,8 @@ export const Flow = () => {
   
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  
+
+
   // Generate flow elements when search data is available
   useEffect(() => {
     if (search?.rootNode && fetchedNodes) {
@@ -144,6 +147,14 @@ export const Flow = () => {
         onConnect={onConnect}
         connectionLineType={ConnectionLineType.SmoothStep}
         className="bg-background dark"
+        fitView
+        fitViewOptions={{
+          maxZoom: 1.2,
+          duration: 1200,
+          nodes: [{
+            id: `node-${search?.rootNode?.id}`
+          }]
+        }}
         proOptions={{
           hideAttribution: true
         }}
@@ -154,3 +165,4 @@ export const Flow = () => {
     </div>
   );
 };
+
