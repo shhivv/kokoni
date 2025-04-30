@@ -392,14 +392,20 @@ The British Industrial Revolution negatively impacted India, transforming it int
 
       // Update the parent-child relationships in a transaction
       return await ctx.db.$transaction(async (tx) => {
-        // For each child node, update its parent to be the deleted node's parent
-        if (node.children.length > 0) {
-          for (const child of node.children) {
+        // For each child node
+        for (const child of node.children) {
+          if (child.selected) {
+            // If child is selected, update its parent to be the deleted node's parent
             await tx.node.update({
               where: { id: child.id },
               data: { 
                 parentId: node.parent?.id ?? null,
               },
+            });
+          } else {
+            // If child is not selected, delete it
+            await tx.node.delete({
+              where: { id: child.id },
             });
           }
         }

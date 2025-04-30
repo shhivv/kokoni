@@ -16,7 +16,7 @@ import {
   getConnectedEdges,
 } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
- 
+
 import '@xyflow/react/dist/style.css';
 import { generateFlowElements } from '~/lib/initialElements';
 import { api } from '~/trpc/react';
@@ -81,7 +81,7 @@ const FlowSkeleton = () => {
           <Skeleton className="h-8 w-[200px]" />
           <Skeleton className="h-4 w-[300px]" />
         </div>
-        
+
         <div className="grid grid-cols-3 gap-8">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="flex flex-col items-center gap-2">
@@ -90,7 +90,7 @@ const FlowSkeleton = () => {
             </div>
           ))}
         </div>
-        
+
         <div className="flex items-center gap-4">
           <Skeleton className="h-8 w-8 rounded-full" />
           <Skeleton className="h-8 w-8 rounded-full" />
@@ -121,7 +121,7 @@ export const Flow = () => {
   const setSelectedOnly = useCallback(
     () => {
       setShowSelectedOnly(prev => !prev);
-      
+
       if (!showSelectedOnly) {
         // First hide unselected nodes
         const updatedNodes = nodes.map((node) => ({
@@ -131,8 +131,8 @@ export const Flow = () => {
 
         // Get only the visible nodes and their edges
         const visibleNodes = updatedNodes.filter(node => !node.hidden);
-        const visibleEdges = edges.filter(edge => 
-          !updatedNodes.find(n => n.id === edge.source)?.hidden && 
+        const visibleEdges = edges.filter(edge =>
+          !updatedNodes.find(n => n.id === edge.source)?.hidden &&
           !updatedNodes.find(n => n.id === edge.target)?.hidden
         );
 
@@ -164,6 +164,41 @@ export const Flow = () => {
   const onNodesDelete = useCallback(
     async (deleted: Node[]) => {
       // Call the API to delete each node
+
+
+      // Update nodes by removing deleted nodes and their unselected children
+      setNodes((currentNodes) => {
+        const deletedIds = new Set(deleted.map(node => node.id));
+        return currentNodes.filter(node => {
+          // Keep node if it's not deleted and not an unselected child of a deleted node
+          return !deletedIds.has(node.id) &&
+            !(node.data.parentId && deletedIds.has(`node-${node.data.parentId}`) && !node.data.selected);
+        });
+      });
+
+      // Update the edges in the UI
+      setEdges(
+        deleted.reduce((acc, node) => {
+          const incomers = getIncomers(node, nodes, edges);
+          const outgoers = getOutgoers(node, nodes, edges);
+          const connectedEdges = getConnectedEdges([node], edges);
+
+          const remainingEdges = acc.filter(
+            (edge) => !connectedEdges.includes(edge),
+          );
+
+          const createdEdges = incomers.flatMap(({ id: source }) =>
+            outgoers.map(({ id: target }) => ({
+              id: `edge-${source}-${target}`,
+              source,
+              target,
+            })),
+          );
+
+          return [...remainingEdges, ...createdEdges];
+        }, edges),
+      );
+
       for (const node of deleted) {
         const nodeId = Number(node.id.split("-")[1]);
         try {
@@ -172,29 +207,6 @@ export const Flow = () => {
           console.error('Failed to delete node:', error);
         }
       }
-
-      // Update the edges in the UI
-      setEdges(
-        deleted.reduce((acc, node) => {
-          const incomers = getIncomers(node, nodes, edges);
-          const outgoers = getOutgoers(node, nodes, edges);
-          const connectedEdges = getConnectedEdges([node], edges);
- 
-          const remainingEdges = acc.filter(
-            (edge) => !connectedEdges.includes(edge),
-          );
- 
-          const createdEdges = incomers.flatMap(({ id: source }) =>
-            outgoers.map(({ id: target }) => ({
-              id: `edge-${source}-${target}`,
-              source,
-              target,
-            })),
-          );
- 
-          return [...remainingEdges, ...createdEdges];
-        }, edges),
-      );
     },
     [nodes, edges, deleteNode],
   );
@@ -210,7 +222,7 @@ export const Flow = () => {
         {
           id: `skeleton-1-${nodeId}`,
           type: 'kokoniNode',
-          data: { 
+          data: {
             isLoading: true,
             question: '',
             summary: null,
@@ -223,7 +235,7 @@ export const Flow = () => {
         {
           id: `skeleton-2-${nodeId}`,
           type: 'kokoniNode',
-          data: { 
+          data: {
             isLoading: true,
             question: '',
             summary: null,
@@ -251,7 +263,7 @@ export const Flow = () => {
           animated: true,
         }
       ];
-      
+
       // Update the clicked node to show summary loading state
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
         [...nodes, ...skeletonNodes],
@@ -265,19 +277,19 @@ export const Flow = () => {
         currentNodes.map((n) =>
           n.id === `node-${nodeId}`
             ? {
-                ...n,
-                data: {
-                  ...n.data,
-                  summaryLoading: true
-                }
+              ...n,
+              data: {
+                ...n.data,
+                summaryLoading: true
               }
+            }
             : n
         )
       );
       // Call the API to get real nodes
       // what is subNodes?
       const { subNodes, summary } = await selectNode.mutateAsync({ nodeId });
-    
+
       // Update the nodes with the real data
       setNodes((currentNodes) => {
         return currentNodes.map((node) => {
@@ -318,7 +330,7 @@ export const Flow = () => {
           return node;
         });
       });
-      
+
       // Update the edges to match the new node IDs
       setEdges((currentEdges) => {
         return currentEdges.map((edge) => {
@@ -340,12 +352,12 @@ export const Flow = () => {
           return edge;
         });
       });
-      
+
     } catch (error) {
       console.error('Failed to select node:', error);
     }
   }, [nodes, edges, setNodes, setEdges, selectNode]);
-  
+
   // Generate flow elements when search data is available
   useEffect(() => {
     if (search?.rootNode && fetchedNodes) {
@@ -361,7 +373,7 @@ export const Flow = () => {
       }
     }
   }, [search, fetchedNodes, setNodes, setEdges]);
- 
+
   const onConnect = useCallback(
     (params: Connection) =>
       setEdges((eds) =>
@@ -369,11 +381,11 @@ export const Flow = () => {
       ),
     [setEdges],
   );
- 
+
   if (isLoading) {
     return <FlowSkeleton />;
   }
- 
+
   return (
     <div className="floating-edges relative h-full w-full bg-card">
       <ReactFlow
@@ -399,12 +411,12 @@ export const Flow = () => {
           hideAttribution: true
         }}
       >
-        <Controls/>
-        <MiniMap/>
+        <Controls />
+        <MiniMap />
       </ReactFlow>
-      
 
-       <div className="absolute bottom-8 left-1/2 w-[600px] -translate-x-1/2">
+
+      <div className="absolute bottom-8 left-1/2 w-[600px] -translate-x-1/2">
         <div className="relative">
           <div className="relative">
             <input
@@ -423,13 +435,13 @@ export const Flow = () => {
                 )}
                 onClick={setSelectedOnly}
               >
-                {showSelectedOnly ? <EyeClosed/> : <Eye/>}
+                {showSelectedOnly ? <EyeClosed /> : <Eye />}
               </Button>
               <div className="mx-2 h-8 w-px bg-border" />
               <Button
                 className="h-8 rounded-md bg-primary px-4 text-sm font-medium text-card-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
               >
-                  Generate Report
+                Generate Report
               </Button>
             </div>
           </div>
