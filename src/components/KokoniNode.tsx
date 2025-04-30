@@ -14,7 +14,12 @@ export const KokoniNode = memo(({ data }: { data: KokoniNodeData}) => {
         <Handle type="target" position={Position.Left} isConnectable={false} className="w-2 h-2" />
         <div className="flex flex-col gap-4">
           <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-16 w-full" />
+          <div className='flex flex-col gap-1'>
+          <Skeleton className="h-2 w-full" />
+          <Skeleton className="h-2 w-full" />
+          <Skeleton className="h-2 w-full" />
+          <Skeleton className="h-2 w-full" />
+          </div>
         </div>
         <Handle type="source" position={Position.Right} isConnectable={false} className="w-2 h-2" />
       </div>
