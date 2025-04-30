@@ -78,10 +78,10 @@ The report should synthesize the information and make connections between the to
 
       // Find the root node for this search
       const rootNode = await ctx.db.node.findFirst({
-        where: { 
-          rootForSearchId: input.searchId 
+        where: {
+          rootForSearchId: input.searchId,
         },
-        select: { id: true }
+        select: { id: true },
       });
 
       if (!rootNode) {
@@ -90,8 +90,8 @@ The report should synthesize the information and make connections between the to
 
       // Create or update the report block for the root node
       await ctx.db.reportBlock.upsert({
-        where: { 
-          nodeId: rootNode.id 
+        where: {
+          nodeId: rootNode.id,
         },
         create: {
           content: fullText,

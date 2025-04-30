@@ -15,36 +15,36 @@ datasource db {
 }
 
 model Node {
-  id            Int      @id @default(autoincrement())
-  question      String
-  summary       String?
-  selected      Boolean  @default(false)
-  includeStats  Boolean @default(false)
-  includeImage  Boolean @default(false)
-  includeVerbose Boolean @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  search        Search   @relation("SearchNodes", fields: [searchId], references: [id], onDelete: Cascade)
-  searchId      String
-  parent        Node?    @relation("NodeChildren", fields: [parentId], references: [id], onDelete: Cascade)
-  parentId      Int?
-  children      Node[]   @relation("NodeChildren")
-  reportBlock   ReportBlock?
-  rootForSearch Search?  @relation("RootNode", fields: [rootForSearchId], references: [id], onDelete: Cascade)
-  rootForSearchId String? @unique
+  id              Int          @id @default(autoincrement())
+  question        String
+  summary         String?
+  selected        Boolean      @default(false)
+  includeStats    Boolean      @default(false)
+  includeImage    Boolean      @default(false)
+  includeVerbose  Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  search          Search       @relation("SearchNodes", fields: [searchId], references: [id], onDelete: Cascade)
+  searchId        String
+  parent          Node?        @relation("NodeChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId        Int?
+  children        Node[]       @relation("NodeChildren")
+  reportBlock     ReportBlock?
+  rootForSearch   Search?      @relation("RootNode", fields: [rootForSearchId], references: [id], onDelete: Cascade)
+  rootForSearchId String?      @unique
 }
 
 model Search {
-  id        String   @id @default(cuid())
-  query     String
-  title     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  query       String
+  title       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
   createdById String
-  rootNode  Node?    @relation("RootNode")
-  nodes     Node[]   @relation("SearchNodes")
-  sources   Source[]
+  rootNode    Node?    @relation("RootNode")
+  nodes       Node[]   @relation("SearchNodes")
+  sources     Source[]
 }
 
 model ReportBlock {
@@ -58,14 +58,14 @@ model ReportBlock {
 }
 
 model Source {
-  id        Int      @id @default(autoincrement())
-  url       String
-  title     String
-  content   String
-  search    Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
-  searchId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           Int           @id @default(autoincrement())
+  url          String
+  title        String
+  content      String
+  search       Search        @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  searchId     String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   reportBlocks ReportBlock[] @relation("ReportBlockSources")
 }
 

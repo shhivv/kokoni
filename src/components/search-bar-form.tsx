@@ -203,7 +203,9 @@ export function SearchBarForm({ session }: SearchBarFormProps): JSX.Element {
       </Form>
       {session && (
         <p className="text-center font-label text-xs text-muted-foreground">
-          Remaining searches for the day: {(session.user.pro ? 50 : 5) - (searchQuery.data?.length ?? 0)}/{session.user.pro ? 50 : 5}
+          Remaining searches for the day:{" "}
+          {(session.user.pro ? 50 : 5) - (searchQuery.data?.length ?? 0)}/
+          {session.user.pro ? 50 : 5}
         </p>
       )}
     </div>

@@ -13,4 +13,3 @@ export interface Node {
   updatedAt?: Date;
   rootForSearchId?: string | null;
 }
-

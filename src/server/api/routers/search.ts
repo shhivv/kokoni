@@ -95,7 +95,9 @@ export const searchRouter = createTRPCRouter({
 
       const limit = ctx.session.user.pro ? 50 : 5;
       if (userSearches >= limit) {
-        throw new Error("You have reached the maximum number of searches for today");
+        throw new Error(
+          "You have reached the maximum number of searches for today",
+        );
       }
 
       const searchResults = await tvly.search(input.query, {
@@ -190,14 +192,14 @@ The British Industrial Revolution negatively impacted India, transforming it int
 
       // create child nodes
       await ctx.db.node.createMany({
-        data: subQuestions.map(question => ({
+        data: subQuestions.map((question) => ({
           question: question,
           searchId: search.id,
           selected: false,
-          parentId: rootNode.id
+          parentId: rootNode.id,
         })),
       });
-      
+
       // Update the search to connect it with the root node
       const updatedSearch = await ctx.db.search.update({
         where: {
@@ -253,12 +255,16 @@ The British Industrial Revolution negatively impacted India, transforming it int
       z.object({
         id: z.string(),
         query: z.string().optional(),
-        rootNode: z.object({
-          question: z.string(),
-          children: z.array(z.object({
+        rootNode: z
+          .object({
             question: z.string(),
-          })),
-        }).optional(),
+            children: z.array(
+              z.object({
+                question: z.string(),
+              }),
+            ),
+          })
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -294,7 +300,7 @@ The British Industrial Revolution negatively impacted India, transforming it int
               question: input.rootNode.question,
               children: {
                 deleteMany: {},
-                create: input.rootNode.children.map(child => ({
+                create: input.rootNode.children.map((child) => ({
                   question: child.question,
                   searchId: input.id,
                 })),
@@ -319,10 +325,12 @@ The British Industrial Revolution negatively impacted India, transforming it int
 
   // POST /search/node
   addNode: protectedProcedure
-    .input(z.object({ 
-      parentId: z.number(),
-      question: z.string(),
-    }))
+    .input(
+      z.object({
+        parentId: z.number(),
+        question: z.string(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       // First verify the parent node exists and get its search ID
       const parentNode = await ctx.db.node.findUnique({
@@ -373,9 +381,11 @@ The British Industrial Revolution negatively impacted India, transforming it int
 
   // DELETE /search/node
   deleteNode: protectedProcedure
-    .input(z.object({ 
-      nodeId: z.number(),
-    }))
+    .input(
+      z.object({
+        nodeId: z.number(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       // First verify the node exists and get its search ID and relationships
       const node = await ctx.db.node.findUnique({
@@ -398,7 +408,7 @@ The British Industrial Revolution negatively impacted India, transforming it int
             // If child is selected, update its parent to be the deleted node's parent
             await tx.node.update({
               where: { id: child.id },
-              data: { 
+              data: {
                 parentId: node.parent?.id ?? null,
               },
             });
@@ -421,10 +431,12 @@ The British Industrial Revolution negatively impacted India, transforming it int
 
   // POST /search/node/with-children
   createNodeWithChildren: protectedProcedure
-    .input(z.object({ 
-      parentId: z.number(),
-      query: z.string(),
-    }))
+    .input(
+      z.object({
+        parentId: z.number(),
+        query: z.string(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       // First verify the parent node exists and get its search ID
       const existingNode = await ctx.db.node.findUnique({
@@ -492,7 +504,7 @@ IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestion
 
       // Create child nodes
       await ctx.db.node.createMany({
-        data: subQuestions.map(question => ({
+        data: subQuestions.map((question) => ({
           question: question,
           parentId: newNode.id,
           searchId: existingNode.searchId,
@@ -510,9 +522,11 @@ IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestion
 
   // POST /search/node/select
   selectNode: protectedProcedure
-    .input(z.object({ 
-      nodeId: z.number(),
-    }))
+    .input(
+      z.object({
+        nodeId: z.number(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       // Fetch the node to verify it exists and get its question
       const node = await ctx.db.node.findUnique({
@@ -578,7 +592,7 @@ IMPORTANT: Return only a valid JSON object with the subQuestions field, without 
       // Update the node to be selected and add summary
       await ctx.db.node.update({
         where: { id: input.nodeId },
-        data: { 
+        data: {
           selected: true,
           summary: summaryResponse.object.summary,
         },
@@ -586,7 +600,7 @@ IMPORTANT: Return only a valid JSON object with the subQuestions field, without 
 
       // Create two unselected child nodes
       const subNodes = await ctx.db.node.createManyAndReturn({
-        data: subQuestionsResponse.object.subQuestions.map(question => ({
+        data: subQuestionsResponse.object.subQuestions.map((question) => ({
           question: question,
           parentId: input.nodeId,
           searchId: node.searchId,
@@ -594,7 +608,7 @@ IMPORTANT: Return only a valid JSON object with the subQuestions field, without 
         })),
       });
 
-      return { 
+      return {
         success: true,
         subNodes: subNodes,
         summary: summaryResponse.object.summary,

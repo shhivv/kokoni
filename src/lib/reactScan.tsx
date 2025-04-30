@@ -9,7 +9,5 @@ export function ReactScan(): JSX.Element {
       enabled: true,
     });
   }, []);
-  return (
-    <></>
-  );
+  return <></>;
 }
