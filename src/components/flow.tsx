@@ -24,7 +24,7 @@ import { getNodeWithChildren } from '~/lib/generateHierarchy';
 import { Skeleton } from '~/components/ui/skeleton';
 
 const nodeWidth = 320;
-const nodeHeight = 172;
+const nodeHeight = 200;
 
 // This is our layouting function using dagre
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'LR') => {
