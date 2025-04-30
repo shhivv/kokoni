@@ -163,8 +163,9 @@ export const Flow = () => {
   );
   const onNodesDelete = useCallback(
     async (deleted: Node[]) => {
-      // Call the API to delete each node
-
+        // if(deleted[0]?.data.id === search?.rootNode?.id ) {
+        //     return;
+        // }
 
       // Update nodes by removing deleted nodes and their unselected children
       setNodes((currentNodes) => {
