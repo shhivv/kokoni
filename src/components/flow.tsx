@@ -20,6 +20,7 @@ import { api } from '~/trpc/react';
 import { useParams } from 'next/navigation';
 import { KokoniNode } from './KokoniNode';
 import { getNodeWithChildren } from '~/lib/generateHierarchy';
+import { Skeleton } from '~/components/ui/skeleton';
  
 const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
  
@@ -60,25 +61,56 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'LR') => 
 const nodeTypes = {
   "kokoniNode": KokoniNode
 }
+
+// Skeleton loader component for the flow
+const FlowSkeleton = () => {
+  return (
+    <div className="floating-edges relative h-full w-full bg-card flex items-center justify-center">
+      <div className="flex flex-col items-center gap-8">
+        <div className="flex flex-col items-center gap-4">
+          <Skeleton className="h-8 w-[200px]" />
+          <Skeleton className="h-4 w-[300px]" />
+        </div>
+        
+        <div className="grid grid-cols-3 gap-8">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex flex-col items-center gap-2">
+              <Skeleton className="h-[172px] w-[320px] rounded-lg" />
+              <Skeleton className="h-4 w-[100px]" />
+            </div>
+          ))}
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <Skeleton className="h-8 w-8 rounded-full" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const Flow = () => {
   const params = useParams<{ slug: string }>();
-  const { data: search } = api.search.getById.useQuery({
+  const { data: search, isLoading: isSearchLoading } = api.search.getById.useQuery({
     id: params.slug,
   });
 
-  const fetchedNodes = api.search.getAllNodes.useQuery({ searchId: params.slug });
+  const { data: fetchedNodes, isLoading: isNodesLoading } = api.search.getAllNodes.useQuery({ searchId: params.slug });
 
+  const isLoading = isSearchLoading || isNodesLoading;
   
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   
   // Generate flow elements when search data is available
   useEffect(() => {
-    if (search?.rootNode && fetchedNodes?.data) {
+    if (search?.rootNode && fetchedNodes) {
       // We've already checked that rootNode exists
       const rootNode = search.rootNode as NonNullable<typeof search.rootNode>;
       // Use type assertion to tell TypeScript this is compatible
-      const nodeWithChildren = getNodeWithChildren(rootNode.id, fetchedNodes.data as any);
+      const nodeWithChildren = getNodeWithChildren(rootNode.id, fetchedNodes);
       if (nodeWithChildren) {
         const { nodes: flowNodes, edges: flowEdges } = generateFlowElements(nodeWithChildren);
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(flowNodes, flowEdges);
@@ -86,7 +118,7 @@ export const Flow = () => {
         setEdges(layoutedEdges);
       }
     }
-  }, [search, fetchedNodes.data, setNodes, setEdges]);
+  }, [search, fetchedNodes, setNodes, setEdges]);
  
   const onConnect = useCallback(
     (params: Connection) =>
@@ -95,6 +127,10 @@ export const Flow = () => {
       ),
     [setEdges],
   );
+ 
+  if (isLoading) {
+    return <FlowSkeleton />;
+  }
  
   return (
     <div className="floating-edges relative h-full w-full bg-card">
