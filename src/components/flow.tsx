@@ -11,6 +11,9 @@ import {
   Connection,
   Controls,
   Position,
+  getIncomers,
+  getOutgoers,
+  getConnectedEdges,
 } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
  
@@ -157,7 +160,32 @@ export const Flow = () => {
     },
     [nodes, edges, setNodes, setEdges, showSelectedOnly, search, fetchedNodes],
   );
-
+  const onNodesDelete = useCallback(
+    (deleted: Node[]) => {
+      setEdges(
+        deleted.reduce((acc, node) => {
+          const incomers = getIncomers(node, nodes, edges);
+          const outgoers = getOutgoers(node, nodes, edges);
+          const connectedEdges = getConnectedEdges([node], edges);
+ 
+          const remainingEdges = acc.filter(
+            (edge) => !connectedEdges.includes(edge),
+          );
+ 
+          const createdEdges = incomers.flatMap(({ id: source }) =>
+            outgoers.map(({ id: target }) => ({
+              id: `edge-${source}-${target}`,
+              source,
+              target,
+            })),
+          );
+ 
+          return [...remainingEdges, ...createdEdges];
+        }, edges),
+      );
+    },
+    [nodes, edges],
+  );
   // Handle node selection
   const onNodeClick = useCallback(async (event: React.MouseEvent, node: Node) => {
     if (node.data.selected) {
@@ -344,6 +372,7 @@ export const Flow = () => {
         nodeTypes={nodeTypes}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onNodesDelete={onNodesDelete}
         connectionLineType={ConnectionLineType.SmoothStep}
         className="bg-background dark"
         fitView
