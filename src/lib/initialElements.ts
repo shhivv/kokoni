@@ -47,7 +47,7 @@ export const generateFlowElements = (rootNode: Node) => {
         source: parentId,
         target: childId,
         type: edgeType,
-        animated: true,
+        animated: !child.selected,
       });
       
       // Process child's children

@@ -352,6 +352,13 @@ export const Flow = () => {
               target: `node-${subNodes[1]?.id}`
             };
           }
+
+          if (edge.target === `node-${nodeId}`) {
+            return {
+              ...edge,
+              animated: false,
+            };
+          }
           return edge;
         });
       });
@@ -380,9 +387,13 @@ export const Flow = () => {
   const onConnect = useCallback(
     (params: Connection) =>
       setEdges((eds) =>
-        addEdge({ ...params, type: ConnectionLineType.SmoothStep, animated: true }, eds),
+        addEdge({ 
+          ...params, 
+          type: ConnectionLineType.Bezier, 
+          animated: !nodes.find(n => n.id === params.target)?.data.selected 
+        }, eds),
       ),
-    [setEdges],
+    [setEdges, nodes],
   );
 
   if (isLoading) {
