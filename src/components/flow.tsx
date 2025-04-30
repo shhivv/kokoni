@@ -11,7 +11,6 @@ import {
   Connection,
   Controls,
   Position,
-  useReactFlow,
 } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
  
@@ -22,7 +21,7 @@ import { useParams } from 'next/navigation';
 import { KokoniNode } from './KokoniNode';
 import { getNodeWithChildren } from '~/lib/generateHierarchy';
 import { Skeleton } from '~/components/ui/skeleton';
-
+import { Button } from '~/components/ui/button';
 const nodeWidth = 320;
 const nodeHeight = 200;
 
@@ -110,6 +109,51 @@ export const Flow = () => {
   
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [showSelectedOnly, setShowSelectedOnly] = useState(false);
+
+  const setSelectedOnly = useCallback(
+    () => {
+      setShowSelectedOnly(prev => !prev);
+      
+      if (!showSelectedOnly) {
+        // First hide unselected nodes
+        const updatedNodes = nodes.map((node) => ({
+          ...node,
+          hidden: !node.data.selected,
+        }));
+
+        // Get only the visible nodes and their edges
+        const visibleNodes = updatedNodes.filter(node => !node.hidden);
+        const visibleEdges = edges.filter(edge => 
+          !updatedNodes.find(n => n.id === edge.source)?.hidden && 
+          !updatedNodes.find(n => n.id === edge.target)?.hidden
+        );
+
+        // Re-layout the visible nodes
+        const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+          visibleNodes,
+          visibleEdges
+        );
+
+        // Update nodes and edges with new layout
+        setNodes(layoutedNodes);
+        setEdges(layoutedEdges);
+      } else {
+        // Show all nodes by regenerating from fetchedNodes
+        if (search?.rootNode && fetchedNodes) {
+          const rootNode = search.rootNode as NonNullable<typeof search.rootNode>;
+          const nodeWithChildren = getNodeWithChildren(rootNode.id, fetchedNodes);
+          if (nodeWithChildren) {
+            const { nodes: flowNodes, edges: flowEdges } = generateFlowElements(nodeWithChildren);
+            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(flowNodes, flowEdges);
+            setNodes(layoutedNodes);
+            setEdges(layoutedEdges);
+          }
+        }
+      }
+    },
+    [nodes, edges, setNodes, setEdges, showSelectedOnly, search, fetchedNodes],
+  );
 
   // Handle node selection
   const onNodeClick = useCallback(async (event: React.MouseEvent, node: Node) => {
@@ -286,6 +330,9 @@ export const Flow = () => {
  
   return (
     <div className="floating-edges relative h-full w-full bg-card">
+      <Button onClick={setSelectedOnly}>
+        {showSelectedOnly ? 'Show All Nodes' : 'Show Selected Only'}
+      </Button>
       <ReactFlow
         nodes={nodes}
         edges={edges}
