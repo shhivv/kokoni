@@ -22,6 +22,8 @@ import { KokoniNode } from './KokoniNode';
 import { getNodeWithChildren } from '~/lib/generateHierarchy';
 import { Skeleton } from '~/components/ui/skeleton';
 import { Button } from '~/components/ui/button';
+import { Eye, EyeClosed } from 'lucide-react';
+import { cn } from '~/lib/utils';
 const nodeWidth = 320;
 const nodeHeight = 200;
 
@@ -106,7 +108,8 @@ export const Flow = () => {
   const selectNode = api.search.selectNode.useMutation();
 
   const isLoading = isSearchLoading || isNodesLoading;
-  
+  const [prompt, setPrompt] = useState('');
+
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [showSelectedOnly, setShowSelectedOnly] = useState(false);
@@ -330,9 +333,6 @@ export const Flow = () => {
  
   return (
     <div className="floating-edges relative h-full w-full bg-card">
-      <Button onClick={setSelectedOnly}>
-        {showSelectedOnly ? 'Show All Nodes' : 'Show Selected Only'}
-      </Button>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -358,6 +358,39 @@ export const Flow = () => {
         <Controls/>
         <MiniMap/>
       </ReactFlow>
+      
+
+       <div className="absolute bottom-8 left-1/2 w-[600px] -translate-x-1/2">
+        <div className="relative">
+          <div className="relative">
+            <input
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Add additional instructions for the report..."
+              className="h-12 w-full rounded-lg border border-border bg-card px-4 pr-[220px] text-sm text-foreground placeholder:text-muted-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-8 w-8"
+                )}
+                onClick={setSelectedOnly}
+              >
+                {showSelectedOnly ? <Eye/> : <EyeClosed/>}
+              </Button>
+              <div className="mx-2 h-8 w-px bg-border" />
+              <Button
+                className="h-8 rounded-md bg-primary px-4 text-sm font-medium text-card-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                  Generate Report
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
