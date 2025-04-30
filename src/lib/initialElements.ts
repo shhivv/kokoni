@@ -1,6 +1,6 @@
 import { Node } from "~/types/NodeInterface";
 const position = { x: 0, y: 0 };
-const edgeType = 'smoothstep';
+const edgeType = 'bezier';
  
 /**
  * Generates initialNodes and initialEdges for ReactFlow based on a root node and its children
