@@ -104,21 +104,23 @@ export const searchRouter = createTRPCRouter({
         },
       });
 
-      const structurePrompt = `Transform the topic "${input.query}" into a main question and generate two related sub-questions.
+      const structurePrompt = `Transform the topic "${input.query}" into a title, main question and generate two related sub-questions.
 
 Here are some key points to consider:
 ${searchResults.results.map((r) => r.content).join("\n")}
 
 Requirements:
-1. Main question should be broad and capture the essence of the topic
-2. Sub-questions should be more specific and explore different aspects
-3. All questions should be clear and concise (5-15 words)
-4. Questions should encourage exploration and discussion
-5. Avoid yes/no questions
-6. Sub-questions should naturally follow from the main question
+1. Title should be concise and descriptive (max 50 characters)
+2. Main question should be broad and capture the essence of the topic
+3. Sub-questions should be more specific and explore different aspects
+4. All questions should be clear and concise (5-15 words)
+5. Questions should encourage exploration and discussion
+6. Avoid yes/no questions
+7. Sub-questions should naturally follow from the main question
 
 Example format (DO NOT copy these exact questions, create appropriate ones for the topic):
 {
+  "title": "Industrial Revolution Impact",
   "mainQuestion": "How did the Industrial Revolution transform society?",
   "subQuestions": [
     "What were the key technological innovations that drove change?",
@@ -126,19 +128,20 @@ Example format (DO NOT copy these exact questions, create appropriate ones for t
   ]
 }
 
-IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestions fields, without any additional text or explanations.`;
+IMPORTANT: Return only a valid JSON object with the title, mainQuestion and subQuestions fields, without any additional text or explanations.`;
 
       const response = await generateObject({
         // @ts-expect-error model
         model: google("gemini-1.5-flash"),
         schema: z.object({
+          title: z.string().max(70),
           mainQuestion: z.string(),
           subQuestions: z.array(z.string()),
         }),
         prompt: structurePrompt,
       });
 
-      const { mainQuestion, subQuestions } = response.object;
+      const { title, mainQuestion, subQuestions } = response.object;
 
       // Generate summary for the root node
       const summaryPrompt = `Create a very short summary (max 300 characters) answering this question: "${mainQuestion}"
@@ -165,6 +168,7 @@ The British Industrial Revolution negatively impacted India, transforming it int
       // Create the search without root node
       const search = await ctx.db.search.create({
         data: {
+          title,
           query: input.query,
           createdById: ctx.session.user.id,
         },
