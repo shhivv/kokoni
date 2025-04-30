@@ -142,7 +142,7 @@ export const Flow = () => {
             includeImage: false,
           },
           position: { x: 0, y: 0 }, // Position will be set by layout
-        }
+        },
       ];
 
       const skeletonEdges = [
@@ -161,7 +161,8 @@ export const Flow = () => {
           animated: true,
         }
       ];
-
+      
+      // Update the clicked node to show summary loading state
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
         [...nodes, ...skeletonNodes],
         [...edges, ...skeletonEdges]
@@ -170,10 +171,22 @@ export const Flow = () => {
       setNodes(layoutedNodes);
       setEdges(layoutedEdges);
 
+      setNodes((currentNodes) =>
+        currentNodes.map((n) =>
+          n.id === `node-${nodeId}`
+            ? {
+                ...n,
+                data: {
+                  ...n.data,
+                  summaryLoading: true
+                }
+              }
+            : n
+        )
+      );
       // Call the API to get real nodes
       // what is subNodes?
       const { subNodes, summary } = await selectNode.mutateAsync({ nodeId });
-      console.log(subNodes);
     
       // Update the nodes with the real data
       setNodes((currentNodes) => {
@@ -185,7 +198,9 @@ export const Flow = () => {
               data: {
                 ...node.data,
                 summary,
-                isLoading: false
+                isLoading: false,
+                summaryLoading: false,
+                selected: true
               }
             };
           }
