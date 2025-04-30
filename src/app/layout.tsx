@@ -1,3 +1,4 @@
+import { ReactScan } from "~/lib/reactScan";
 import "~/styles/globals.css";
 
 import { Newsreader, Figtree, Inter, Red_Hat_Display } from "next/font/google";
@@ -29,6 +30,7 @@ export default function RootLayout({
       lang="en"
       className={`${newsreader.variable} ${figtree.variable} ${inter.variable} ${rdh.variable} dark font-sans antialiased`}
     >
+      {/* <ReactScan/> */}
       <body>
         <TRPCReactProvider>
           <SidebarProvider defaultOpen={false} className="bg-card">
