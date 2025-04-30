@@ -28,7 +28,7 @@ import { Button } from '~/components/ui/button';
 import { Eye, EyeClosed } from 'lucide-react';
 import { cn } from '~/lib/utils';
 const nodeWidth = 320;
-const nodeHeight = 200;
+const nodeHeight = 260;
 
 // This is our layouting function using dagre
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'LR') => {
