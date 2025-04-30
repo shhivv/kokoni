@@ -1,8 +1,25 @@
 import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Node } from '~/types/NodeInterface';
+import { Skeleton } from './ui/skeleton';
 
-export const KokoniNode = memo(({ data }: { data: Node}) => {
+interface KokoniNodeData extends Node {
+  isLoading?: boolean;
+}
+
+export const KokoniNode = memo(({ data }: { data: KokoniNodeData}) => {
+  if (data.isLoading) {
+    return (
+      <div className="w-72 py-4 bg-muted/50 px-4 shadow-md rounded-md border border-neutralborder">
+        <Handle type="target" position={Position.Left} isConnectable={false} className="w-2 h-2" />
+        <div className="flex flex-col gap-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+        <Handle type="source" position={Position.Right} isConnectable={false} className="w-2 h-2" />
+      </div>
+    );
+  }
 
   return (
     <div 

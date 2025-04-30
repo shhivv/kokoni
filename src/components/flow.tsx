@@ -12,7 +12,6 @@ import {
   Controls,
   Position,
   useReactFlow,
-  ReactFlowProvider,
 } from '@xyflow/react';
 import dagre from '@dagrejs/dagre';
  
@@ -23,43 +22,48 @@ import { useParams } from 'next/navigation';
 import { KokoniNode } from './KokoniNode';
 import { getNodeWithChildren } from '~/lib/generateHierarchy';
 import { Skeleton } from '~/components/ui/skeleton';
- 
-const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
- 
-const nodeWidth = 320
-const nodeHeight = 172 
+
+const nodeWidth = 320;
+const nodeHeight = 172;
+
+// This is our layouting function using dagre
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'LR') => {
+  // Create a new directed graph
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
   dagreGraph.setGraph({ rankdir: direction });
- 
+
+  // Add nodes to the graph with their dimensions
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
   });
- 
+
+  // Add edges to the graph
   edges.forEach((edge) => {
     dagreGraph.setEdge(edge.source, edge.target);
   });
- 
+
+  // Apply the layout
   dagre.layout(dagreGraph);
- 
-  const newNodes = nodes.map((node) => {
+
+  // Get the positioned nodes from dagre
+  const layoutedNodes = nodes.map((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
-    const newNode = {
+    return {
       ...node,
-      targetPosition: Position.Right,
-      sourcePosition: Position.Left,
+      targetPosition: Position.Left,
+      sourcePosition: Position.Right,
       // We are shifting the dagre node position (anchor=center center) to the top left
-      // so it matches the React Flow node anchor point (top left).
       position: {
         x: nodeWithPosition.x - nodeWidth / 2,
         y: nodeWithPosition.y - nodeHeight / 2,
       },
     };
- 
-    return newNode;
   });
- 
-  return { nodes: newNodes, edges };
+
+  return { nodes: layoutedNodes, edges };
 };
+
 const nodeTypes = {
   "kokoniNode": KokoniNode
 }
@@ -100,13 +104,80 @@ export const Flow = () => {
   });
 
   const { data: fetchedNodes, isLoading: isNodesLoading } = api.search.getAllNodes.useQuery({ searchId: params.slug });
+  const selectNode = api.search.selectNode.useMutation();
 
   const isLoading = isSearchLoading || isNodesLoading;
   
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
+  // Handle node selection
+  const onNodeClick = useCallback(async (event: React.MouseEvent, node: Node) => {
+    try {
+      // Immediately add two skeleton nodes
+      const nodeId = Number(node.id.split("-")[1]);
+      const skeletonNodes = [
+        {
+          id: `skeleton-1-${nodeId}`,
+          type: 'kokoniNode',
+          data: { 
+            isLoading: true,
+            question: '',
+            summary: null,
+            selected: false,
+            includeStats: false,
+            includeImage: false,
+          },
+          position: { x: 0, y: 0 }, // Position will be set by layout
+        },
+        {
+          id: `skeleton-2-${nodeId}`,
+          type: 'kokoniNode',
+          data: { 
+            isLoading: true,
+            question: '',
+            summary: null,
+            selected: false,
+            includeStats: false,
+            includeImage: false,
+          },
+          position: { x: 0, y: 0 }, // Position will be set by layout
+        }
+      ];
 
+      const skeletonEdges = [
+        {
+          id: `edge-${node.id}-skeleton-1-${nodeId}`,
+          source: node.id,
+          target: `skeleton-1-${nodeId}`,
+          type: ConnectionLineType.Bezier,
+          animated: true,
+        },
+        {
+          id: `edge-${node.id}-skeleton-2-${nodeId}`,
+          source: node.id,
+          target: `skeleton-2-${nodeId}`,
+          type: ConnectionLineType.Bezier,
+          animated: true,
+        }
+      ];
+
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+        [...nodes, ...skeletonNodes],
+        [...edges, ...skeletonEdges]
+      );
+
+      setNodes(layoutedNodes);
+      setEdges(layoutedEdges);
+
+      // Call the API to get real nodes
+      await selectNode.mutateAsync({ nodeId });
+      
+    } catch (error) {
+      console.error('Failed to select node:', error);
+    }
+  }, [nodes, edges, setNodes, setEdges, selectNode]);
+  
   // Generate flow elements when search data is available
   useEffect(() => {
     if (search?.rootNode && fetchedNodes) {
@@ -137,7 +208,6 @@ export const Flow = () => {
  
   return (
     <div className="floating-edges relative h-full w-full bg-card">
-      
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -145,6 +215,7 @@ export const Flow = () => {
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         onConnect={onConnect}
+        onNodeClick={onNodeClick}
         connectionLineType={ConnectionLineType.SmoothStep}
         className="bg-background dark"
         fitView
