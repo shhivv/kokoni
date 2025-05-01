@@ -16,68 +16,23 @@ import {
   getConnectedEdges,
   ReactFlowProvider,
 } from "@xyflow/react";
-import dagre from "@dagrejs/dagre";
 
 import "@xyflow/react/dist/style.css";
-import { generateFlowElements } from "~/lib/initialElements";
+import { generateFlowElements } from "~/components/tabs/flow/initial-elements";
 import { api } from "~/trpc/react";
 import { useParams } from "next/navigation";
-import { KokoniNode } from "./components/kokoni-node";
-import { getNodeWithChildren } from "~/lib/generateHierarchy";
+import { KokoniNode } from "../components/kokoni-node";
+import { getNodeWithChildren } from "~/components/tabs/flow/generate-hierarchy";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Button } from "~/components/ui/button";
 import { Eye, EyeClosed } from "lucide-react";
 import { cn } from "~/lib/utils";
-const nodeWidth = 320;
-const nodeHeight = 260;
-
-// This is our layouting function using dagre
-const getLayoutedElements = (
-  nodes: Node[],
-  edges: Edge[],
-  direction = "LR",
-) => {
-  // Create a new directed graph
-  const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({ rankdir: direction });
-
-  // Add nodes to the graph with their dimensions
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-  });
-
-  // Add edges to the graph
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  // Apply the layout
-  dagre.layout(dagreGraph);
-
-  // Get the positioned nodes from dagre
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    return {
-      ...node,
-      targetPosition: Position.Left,
-      sourcePosition: Position.Right,
-      // We are shifting the dagre node position (anchor=center center) to the top left
-      position: {
-        x: nodeWithPosition.x - nodeWidth / 2,
-        y: nodeWithPosition.y - nodeHeight / 2,
-      },
-    };
-  });
-
-  return { nodes: layoutedNodes, edges };
-};
+import { getLayoutedElements } from "./get-layouted-elments";
 
 const nodeTypes = {
   kokoniNode: KokoniNode,
 };
 
-// Skeleton loader component for the flow
 const FlowSkeleton = () => {
   return (
     <div className="floating-edges relative flex h-full w-full items-center justify-center bg-card">
