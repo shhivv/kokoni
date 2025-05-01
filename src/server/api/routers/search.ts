@@ -323,62 +323,6 @@ The British Industrial Revolution negatively impacted India, transforming it int
       });
     }),
 
-  // POST /search/node
-  addNode: protectedProcedure
-    .input(
-      z.object({
-        parentId: z.number(),
-        question: z.string(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      // First verify the parent node exists and get its search ID
-      const parentNode = await ctx.db.node.findUnique({
-        where: { id: input.parentId },
-        select: { searchId: true },
-      });
-
-      if (!parentNode) {
-        throw new Error("Parent node not found");
-      }
-
-      // Generate summary for the new node
-      const summaryPrompt = `Create a very short summary (max 300 characters) answering this question: "${input.question}"
-
-Requirements:
-1. Be concise
-2. Focus on the key point
-3. Use simple language
-4. Stay under 300 characters
-5. Return only the summary text, no quotes or additional text
-
-Example format:
-The British Industrial Revolution negatively impacted India, transforming it into a supplier of raw materials and a market for British goods, hindering its own industrial development and causing economic exploitation.`;
-
-      const summaryResponse = await generateObject({
-        // @ts-expect-error model
-        model: google("gemini-1.5-flash"),
-        schema: z.object({
-          summary: z.string().max(300),
-        }),
-        prompt: summaryPrompt,
-      });
-
-      // Create the new node
-      return await ctx.db.node.create({
-        data: {
-          question: input.question,
-          parentId: input.parentId,
-          searchId: parentNode.searchId,
-          selected: true,
-          summary: summaryResponse.object.summary,
-        },
-        include: {
-          parent: true,
-        },
-      });
-    }),
-
   // DELETE /search/node
   deleteNode: protectedProcedure
     .input(

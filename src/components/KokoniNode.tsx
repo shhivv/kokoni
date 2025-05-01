@@ -77,9 +77,9 @@ export const KokoniNode = memo(({ data }: { data: KokoniNodeData }) => {
         )}
 
         {data.selected && (
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap gap-2 border rounded-sm">
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               onClick={() => data.onToggleImage?.(!data.showImage)}
               className={`rounded-md px-2 py-1 text-xs transition-colors ${
