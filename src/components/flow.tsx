@@ -173,6 +173,16 @@ export const Flow = () => {
     search,
     fetchedNodes,
   ]);
+
+  const onBeforeDelete = useCallback(
+    async (params: { nodes: Node[]; edges: Edge[] }) => {
+      if (params.nodes[0]?.data.id === search?.rootNode?.id) {
+        return false;
+      }
+      return true;
+    },
+    [search?.rootNode?.id],
+  );
   const onNodesDelete = useCallback(
     async (deleted: Node[]) => {
       // if(deleted[0]?.data.id === search?.rootNode?.id ) {
@@ -432,6 +442,7 @@ export const Flow = () => {
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
+        onBeforeDelete={onBeforeDelete}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         onConnect={onConnect}
