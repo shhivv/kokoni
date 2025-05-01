@@ -2,8 +2,8 @@ import React, { memo } from "react";
 import { Handle, Position } from "@xyflow/react";
 import { Node } from "~/types/NodeInterface";
 import { Skeleton } from "./ui/skeleton";
+import { ImageIcon, BarChart2Icon, FileTextIcon, MessageCircle } from "lucide-react";
 import { Button } from "./ui/button";
-import { ImageIcon, BarChart2Icon, FileTextIcon } from "lucide-react";
 
 interface KokoniNodeData extends Node {
   isLoading?: boolean;
@@ -49,6 +49,11 @@ export const KokoniNode = memo(({ data }: { data: KokoniNodeData }) => {
     <div
       className={`w-72 ${data.selected ? "bg-muted py-8" : "bg-muted/50 py-4"} rounded-md border border-neutralborder px-4 shadow-md`}
     >
+      {data.selected && (
+        <Button variant="ghost" size="icon" className="rounded-full right-0 bottom-0 absolute flex items-center justify-center p-1 overflow-hidden z-10 transform origin-center translate-x-1/2 translate-y-1/2 border bg-muted border-neutralborder">
+          <MessageCircle className="w-3 h-4" />
+        </Button>
+      )}
       {data.parentId ? (
         <Handle
           type="target"
