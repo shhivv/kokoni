@@ -14,6 +14,7 @@ import {
   getIncomers,
   getOutgoers,
   getConnectedEdges,
+  ReactFlowProvider,
 } from "@xyflow/react";
 import dagre from "@dagrejs/dagre";
 
@@ -105,7 +106,7 @@ const FlowSkeleton = () => {
   );
 };
 
-export const Flow = () => {
+export const FlowInner = () => {
   const params = useParams<{ slug: string }>();
   const { data: search, isLoading: isSearchLoading } =
     api.search.getById.useQuery({
@@ -492,5 +493,13 @@ export const Flow = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+export const Flow = () => {
+  return (
+    <ReactFlowProvider>
+      <FlowInner />
+    </ReactFlowProvider>
   );
 };
