@@ -8,7 +8,7 @@ import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { tavily } from "@tavily/core";
 import { env } from "~/env";
-
+import { subQuestionOnlyPrompt, subQuestionPrompt, summaryPrompt } from "~/lib/prompts";
 const tvly = tavily({ apiKey: env.TAVILY_API_KEY });
 
 export const searchRouter = createTRPCRouter({
@@ -107,31 +107,7 @@ export const searchRouter = createTRPCRouter({
         },
       });
 
-      const structurePrompt = `Transform the topic "${input.query}" into a title, main question and generate two related sub-questions.
 
-Here are some key points to consider:
-${searchResults.results.map((r) => r.content).join("\n")}
-
-Requirements:
-1. Title should be concise and descriptive (max 50 characters)
-2. Main question should be broad and capture the essence of the topic
-3. Sub-questions should be more specific and explore different aspects
-4. All questions should be clear and concise (5-15 words)
-5. Questions should encourage exploration and discussion
-6. Avoid yes/no questions
-7. Sub-questions should naturally follow from the main question
-
-Example format (DO NOT copy these exact questions, create appropriate ones for the topic):
-{
-  "title": "Industrial Revolution Impact",
-  "mainQuestion": "How did the Industrial Revolution transform society?",
-  "subQuestions": [
-    "What were the key technological innovations that drove change?",
-    "How did the Industrial Revolution affect social class structures?"
-  ]
-}
-
-IMPORTANT: Return only a valid JSON object with the title, mainQuestion and subQuestions fields, without any additional text or explanations.`;
 
       const response = await generateObject({
         // @ts-expect-error model
@@ -141,23 +117,13 @@ IMPORTANT: Return only a valid JSON object with the title, mainQuestion and subQ
           mainQuestion: z.string(),
           subQuestions: z.array(z.string()),
         }),
-        prompt: structurePrompt,
+        prompt: subQuestionPrompt(input.query, searchResults),
       });
 
       const { title, mainQuestion, subQuestions } = response.object;
 
       // Generate summary for the root node
-      const summaryPrompt = `Create a very short summary (max 300 characters) answering this question: "${mainQuestion}"
-
-Requirements:
-1. Be concise
-2. Focus on the key point
-3. Use simple language
-4. Stay under 300 characters
-5. Return only the summary text, no quotes or additional text
-
-Example format:
-The British Industrial Revolution negatively impacted India, transforming it into a supplier of raw materials and a market for British goods, hindering its own industrial development and causing economic exploitation.`;
+     
 
       const summaryResponse = await generateObject({
         // @ts-expect-error model
@@ -165,7 +131,7 @@ The British Industrial Revolution negatively impacted India, transforming it int
         schema: z.object({
           summary: z.string().max(300),
         }),
-        prompt: summaryPrompt,
+        prompt: summaryPrompt(mainQuestion),
       });
 
       // Create the search without root node
@@ -400,29 +366,7 @@ The British Industrial Revolution negatively impacted India, transforming it int
         },
       });
 
-      const structurePrompt = `Transform the topic "${input.query}" into a main question and generate two related sub-questions.
-
-Here are some key points to consider:
-${searchResults.results.map((r) => r.content).join("\n")}
-
-Requirements:
-1. Main question should be broad and capture the essence of the topic
-2. Sub-questions should be more specific and explore different aspects
-3. All questions should be clear and concise (5-15 words)
-4. Questions should encourage exploration and discussion
-5. Avoid yes/no questions
-6. Sub-questions should naturally follow from the main question
-
-Example format (DO NOT copy these exact questions, create appropriate ones for the topic):
-{
-  "mainQuestion": "How did the Industrial Revolution transform society?",
-  "subQuestions": [
-    "What were the key technological innovations that drove change?",
-    "How did the Industrial Revolution affect social class structures?"
-  ]
-}
-
-IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestions fields, without any additional text or explanations.`;
+     
 
       const response = await generateObject({
         // @ts-expect-error model
@@ -431,7 +375,7 @@ IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestion
           mainQuestion: z.string(),
           subQuestions: z.array(z.string()),
         }),
-        prompt: structurePrompt,
+        prompt: subQuestionPrompt(input.query, searchResults),
       });
 
       const { mainQuestion, subQuestions } = response.object;
@@ -482,47 +426,15 @@ IMPORTANT: Return only a valid JSON object with the mainQuestion and subQuestion
         throw new Error("Node not found");
       }
 
-      // Generate summary for the node
-      const summaryPrompt = `Create a very short summary (max 300 characters) answering this question: "${node.question}"
-
-Requirements:
-1. Be concise
-2. Focus on the key point
-3. Use simple language
-4. Stay under 300 characters
-5. Return only the summary text, no quotes or additional text
-
-Example format:
-The British Industrial Revolution negatively impacted India, transforming it into a supplier of raw materials and a market for British goods, hindering its own industrial development and causing economic exploitation.`;
-
+ 
       const summaryResponse = await generateObject({
         // @ts-expect-error model
         model: google("gemini-1.5-flash"),
         schema: z.object({
           summary: z.string().max(300),
         }),
-        prompt: summaryPrompt,
+        prompt: summaryPrompt(node.question),
       });
-
-      // Generate sub-questions for the node
-      const structurePrompt = `Transform the topic "${node.question}" into two related sub-questions.
-
-Requirements:
-1. Sub-questions should be more specific and explore different aspects
-2. All questions should be clear and concise (5-15 words)
-3. Questions should encourage exploration and discussion
-4. Avoid yes/no questions
-5. Sub-questions should naturally follow from the main question
-
-Example format (DO NOT copy these exact questions, create appropriate ones for the topic):
-{
-  "subQuestions": [
-    "What were the key technological innovations that drove change?",
-    "How did the Industrial Revolution affect social class structures?"
-  ]
-}
-
-IMPORTANT: Return only a valid JSON object with the subQuestions field, without any additional text or explanations.`;
 
       const subQuestionsResponse = await generateObject({
         // @ts-expect-error model
@@ -530,7 +442,7 @@ IMPORTANT: Return only a valid JSON object with the subQuestions field, without 
         schema: z.object({
           subQuestions: z.array(z.string()),
         }),
-        prompt: structurePrompt,
+        prompt: subQuestionOnlyPrompt(node.question),
       });
 
       // Update the node to be selected and add summary

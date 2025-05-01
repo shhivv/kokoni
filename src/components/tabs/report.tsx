@@ -1,11 +1,7 @@
 "use client";
 
 import { api } from "~/trpc/react";
-import { cn } from "~/lib/utils";
 import { Skeleton } from "~/components/ui/skeleton";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
 
 interface ReportProps {
   searchId: string;
