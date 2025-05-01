@@ -1,8 +1,8 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { Flow } from "~/components/flow";
-import { Report } from "~/components/report";
+import { Flow } from "~/components/tabs/flow";
+import { Report } from "~/components/tabs/report";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Button } from "~/components/ui/button";
 import { Share2 } from "lucide-react";

@@ -1,9 +1,9 @@
 import React, { memo } from "react";
 import { Handle, Position } from "@xyflow/react";
 import { Node } from "~/types/NodeInterface";
-import { Skeleton } from "./ui/skeleton";
+import { Skeleton } from "../../ui/skeleton";
 import { ImageIcon, BarChart2Icon, FileTextIcon, MessageCircle } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "../../ui/button";
 
 interface KokoniNodeData extends Node {
   isLoading?: boolean;
