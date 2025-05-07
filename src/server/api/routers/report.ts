@@ -154,5 +154,25 @@ Format the response exactly as follows (a single paragraph):
       });
 
       return reportBlocks;
+    }),
+
+  updateReportBlock: protectedProcedure
+    .input(z.object({
+      reportBlockId: z.number(),
+      content: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { reportBlockId, content } = input;
+
+      const updatedBlock = await ctx.db.reportBlock.update({
+        where: {
+          id: reportBlockId
+        },
+        data: {
+          content: content
+        }
+      });
+
+      return updatedBlock;
     })
 });
