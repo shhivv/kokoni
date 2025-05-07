@@ -48,7 +48,7 @@ export const reportRouter = createTRPCRouter({
           }
         }
 
-        // Generate content using groq (since we can't easily resolve the xai API issues)
+        // Generate content using groq
         const prompt = `
 Based on the following information:
 - Node question: ${nodeContext.nodeQuestion}
@@ -74,16 +74,50 @@ Format the response exactly as follows (with the ### heading and a single paragr
             maxTokens: 500
           });
 
+          const content = response.toString();
+
+          // Store the generated content in the database
+          const reportBlock = await ctx.db.reportBlock.upsert({
+            where: {
+              nodeId: node.id
+            },
+            create: {
+              content: content,
+              nodeId: node.id
+            },
+            update: {
+              content: content
+            }
+          });
+
           // Add result to the array
           results.push({
             nodeId: node.id,
-            content: response
+            content: content,
+            reportBlockId: reportBlock.id
           });
         } catch (error) {
           console.error("AI generation error:", error);
+          const errorContent = `### Error Processing ${node.question || "Node"}\nUnable to generate content due to an error.`;
+          
+          // Store error content in the database
+          const reportBlock = await ctx.db.reportBlock.upsert({
+            where: {
+              nodeId: node.id
+            },
+            create: {
+              content: errorContent,
+              nodeId: node.id
+            },
+            update: {
+              content: errorContent
+            }
+          });
+
           results.push({
             nodeId: node.id,
-            content: `### Error Processing ${node.question || "Node"}\nUnable to generate content due to an error.`
+            content: errorContent,
+            reportBlockId: reportBlock.id
           });
         }
       }
