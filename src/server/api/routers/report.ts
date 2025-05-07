@@ -12,23 +12,29 @@ export const reportRouter = createTRPCRouter({
     .input(
       z.object({
         searchId: z.string(),
-        nodes: z.array(z.custom<Node>()),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { searchId, nodes } = input;
+      const { searchId } = input;
       const results = [];
 
+      // Fetch all nodes for this search from the database
+      const nodes = await ctx.db.node.findMany({
+        where: {
+          searchId: searchId
+        },
+        include: {
+          parent: true // Include parent node data
+        }
+      });
+
       for (const node of nodes) {
-        // Find parent node if it exists
-        const parentNode = node.parentId ? nodes.find(n => n.id === node.parentId) : null;
-        
         // Prepare context for the AI model
         const nodeContext = {
           nodeQuestion: node.question || "",
           nodeSummary: node.summary || "",
-          parentQuestion: parentNode?.question || "",
-          parentSummary: parentNode?.summary || "",
+          parentQuestion: node.parent?.question || "",
+          parentSummary: node.parent?.summary || "",
           searchId: searchId
         };
 
