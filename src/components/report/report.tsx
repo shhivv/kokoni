@@ -3,8 +3,8 @@
 import { api } from "~/trpc/react";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/accordion";
-import { MDXEditor } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
+import { ScrollArea } from "~/components/ui/scroll-area";
 import { Editor } from "./editor";
 
 interface ReportProps {
@@ -36,14 +36,20 @@ export function Report({ searchId }: ReportProps) {
   }
 
   return (
-    <div className="p-4">
-      <Accordion type="multiple" className="w-full">
+    <div className="p-4 flex overflow-y-scroll justify-center">
+      <ScrollArea className="w-1/2">
+
+      <Accordion type="multiple" className="w-full" defaultValue={blocks.map((block) => block.id.toString())}>
         {blocks.map((block) => {
           return (
             <AccordionItem key={block.id} value={block.id.toString()}>
               <AccordionTrigger>{block.heading}</AccordionTrigger>
               <AccordionContent>
-                <Editor 
+                <Editor
+
+                  autoFocus={{ defaultSelection: 'rootEnd' }}
+                  contentEditableClassName="twindprose"
+                  className="dark-theme"
                   markdown={block.content}
                 />
               </AccordionContent>
@@ -51,6 +57,8 @@ export function Report({ searchId }: ReportProps) {
           );
         })}
       </Accordion>
+
+      </ScrollArea>
     </div>
   );
 }

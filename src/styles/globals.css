@@ -161,3 +161,7 @@
   scrollbar-color: hsl(var(--scrollbar-thumb)) hsl(var(--scrollbar-track));
 }
 
+
+.twindprose {
+  @apply prose prose-neutral p-0 font-label text-card dark:prose-invert;
+}

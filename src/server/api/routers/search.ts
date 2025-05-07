@@ -110,7 +110,6 @@ export const searchRouter = createTRPCRouter({
 
 
       const response = await generateObject({
-        // @ts-expect-error model
         model: google("gemini-1.5-flash"),
         schema: z.object({
           title: z.string().max(70),
@@ -126,7 +125,6 @@ export const searchRouter = createTRPCRouter({
      
 
       const summaryResponse = await generateObject({
-        // @ts-expect-error model
         model: google("gemini-1.5-flash"),
         schema: z.object({
           summary: z.string().max(300),
@@ -369,7 +367,6 @@ export const searchRouter = createTRPCRouter({
      
 
       const response = await generateObject({
-        // @ts-expect-error model
         model: google("gemini-1.5-flash"),
         schema: z.object({
           mainQuestion: z.string(),
@@ -428,7 +425,6 @@ export const searchRouter = createTRPCRouter({
 
  
       const summaryResponse = await generateObject({
-        // @ts-expect-error model
         model: google("gemini-1.5-flash"),
         schema: z.object({
           summary: z.string().max(300),
@@ -437,7 +433,6 @@ export const searchRouter = createTRPCRouter({
       });
 
       const subQuestionsResponse = await generateObject({
-        // @ts-expect-error model
         model: google("gemini-1.5-flash"),
         schema: z.object({
           subQuestions: z.array(z.string()),
