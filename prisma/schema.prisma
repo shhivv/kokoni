@@ -49,6 +49,7 @@ model Search {
 
 model ReportBlock {
   id        Int      @id @default(autoincrement())
+  heading   String
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
