@@ -20,7 +20,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { generateFlowElements } from "~/components/tabs/flow/initial-elements";
 import { api } from "~/trpc/react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { KokoniNode } from "../components/kokoni-node";
 import { getNodeWithChildren } from "~/components/tabs/flow/generate-hierarchy";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -28,6 +28,7 @@ import { Button } from "~/components/ui/button";
 import { Eye, EyeClosed } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { getLayoutedElements } from "./get-layouted-elments";
+import { useToast } from "~/hooks/use-toast";
 
 const nodeTypes = {
   kokoniNode: KokoniNode,
@@ -63,6 +64,10 @@ const FlowSkeleton = () => {
 
 export const FlowInner = () => {
   const params = useParams<{ slug: string }>();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+  
   const { data: search, isLoading: isSearchLoading } =
     api.search.getById.useQuery({
       id: params.slug,
@@ -72,9 +77,11 @@ export const FlowInner = () => {
     api.search.getAllNodes.useQuery({ searchId: params.slug });
   const selectNode = api.search.selectNode.useMutation();
   const deleteNode = api.search.deleteNode.useMutation();
+  const generateReport = api.report.produceReport.useMutation();
 
   const isLoading = isSearchLoading || isNodesLoading;
   const [prompt, setPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -384,6 +391,34 @@ export const FlowInner = () => {
     [setEdges, nodes],
   );
 
+  const handleGenerateReport = async () => {
+    if (!params.slug) return;
+    
+    setIsGenerating(true);
+    try {
+      await generateReport.mutateAsync({
+        searchId: params.slug,
+      });
+      
+      // Switch to the report tab
+      router.push(`/${params.slug}?tab=response`);
+      
+      toast({
+        title: "Report Generated",
+        description: "Your report has been generated successfully.",
+      });
+    } catch (error) {
+      console.error("Failed to generate report:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   if (isLoading) {
     return <FlowSkeleton />;
   }
@@ -440,8 +475,12 @@ export const FlowInner = () => {
                 {showSelectedOnly ? <EyeClosed /> : <Eye />}
               </Button>
               <div className="mx-2 h-8 w-px bg-border" />
-              <Button className="h-8 rounded-md bg-primary px-4 text-sm font-medium text-card-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50">
-                Generate Report
+              <Button 
+                className="h-8 rounded-md bg-primary px-4 text-sm font-medium text-card-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={handleGenerateReport}
+                disabled={isGenerating}
+              >
+                {isGenerating ? "Generating..." : "Generate Report"}
               </Button>
             </div>
           </div>

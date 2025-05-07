@@ -21,7 +21,8 @@ export const reportRouter = createTRPCRouter({
       // Fetch all nodes for this search from the database
       const nodes = await ctx.db.node.findMany({
         where: {
-          searchId: searchId
+          searchId: searchId,
+          selected: true
         },
         include: {
           parent: true // Include parent node data
