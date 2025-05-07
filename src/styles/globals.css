@@ -163,5 +163,6 @@
 
 
 .twindprose {
-  @apply prose prose-neutral p-0 font-label text-card dark:prose-invert;
+  @apply prose prose-neutral p-0  text-muted-foreground dark:prose-invert !max-w-none;
+  /* !max-w-none is to overrride builtin max width */
 }

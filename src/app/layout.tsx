@@ -31,7 +31,8 @@ export default function RootLayout({
       className={`${newsreader.variable} ${figtree.variable} ${inter.variable} ${rdh.variable} dark font-sans antialiased`}
     >
       {/* <ReactScan/> */}
-      <body>
+      {/* bg-card needs to be set because a part of the sidebar is exposed */}
+      <body className="bg-card"> 
         <TRPCReactProvider>
           <SidebarProvider defaultOpen={false} className="bg-card">
             <AppSidebar />

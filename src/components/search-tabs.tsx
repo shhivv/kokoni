@@ -49,7 +49,7 @@ export function SearchTabs({ searchId }: { searchId: string }) {
         </Button>
       </div>
 
-      <TabsContent value="response" className="flex-1 overflow-hidden">
+      <TabsContent value="response" className="flex-1">
         <Report searchId={searchId} />
       </TabsContent>
 

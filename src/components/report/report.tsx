@@ -36,17 +36,16 @@ export function Report({ searchId }: ReportProps) {
   }
 
   return (
-    <div className="p-4 flex overflow-y-scroll justify-center">
-      <ScrollArea className="w-1/2">
+    <div className="p-4 flex justify-center bg-card">
+      <div className="w-1/2">
 
       <Accordion type="multiple" className="w-full" defaultValue={blocks.map((block) => block.id.toString())}>
         {blocks.map((block) => {
           return (
             <AccordionItem key={block.id} value={block.id.toString()}>
-              <AccordionTrigger>{block.heading}</AccordionTrigger>
+              <AccordionTrigger className="text-lg font-bold font-heading">{block.heading}</AccordionTrigger>
               <AccordionContent>
                 <Editor
-
                   autoFocus={{ defaultSelection: 'rootEnd' }}
                   contentEditableClassName="twindprose"
                   className="dark-theme"
@@ -58,7 +57,7 @@ export function Report({ searchId }: ReportProps) {
         })}
       </Accordion>
 
-      </ScrollArea>
+      </div>
     </div>
   );
 }
