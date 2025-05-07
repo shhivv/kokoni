@@ -28,6 +28,7 @@
     "@auth/prisma-adapter": "^2.7.2",
     "@dagrejs/dagre": "^1.1.4",
     "@hookform/resolvers": "^4.0.0",
+    "@mdxeditor/editor": "^3.32.1",
     "@openrouter/ai-sdk-provider": "^0.2.2",
     "@prisma/client": "^5.14.0",
     "@radix-ui/react-accordion": "^1.2.10",

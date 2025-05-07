@@ -3,9 +3,9 @@
 import { api } from "~/trpc/react";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/accordion";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
+import { MDXEditor } from '@mdxeditor/editor';
+import '@mdxeditor/editor/style.css';
+import { Editor } from "./editor";
 
 interface ReportProps {
   searchId: string;
@@ -39,20 +39,13 @@ export function Report({ searchId }: ReportProps) {
     <div className="p-4">
       <Accordion type="multiple" className="w-full">
         {blocks.map((block) => {
-          // Extract heading from the markdown content
-          const heading = block.heading;
-          const content = block.content;
-
           return (
-            <AccordionItem key={block.id}  value={block.id.toString()}>
-              <AccordionTrigger>{heading}</AccordionTrigger>
+            <AccordionItem key={block.id} value={block.id.toString()}>
+              <AccordionTrigger>{block.heading}</AccordionTrigger>
               <AccordionContent>
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
-                >
-                  {content}
-                </ReactMarkdown>
+                <Editor 
+                  markdown={block.content}
+                />
               </AccordionContent>
             </AccordionItem>
           );

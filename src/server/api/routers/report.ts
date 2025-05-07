@@ -77,6 +77,7 @@ Format the response exactly as follows (a single paragraph):
 
         try {
           const response = await generateText({
+            // @ts-expect-error model
             model: google("gemini-1.5-flash"),
             prompt: prompt,
             maxTokens: 500

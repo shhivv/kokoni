@@ -2,7 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Flow } from "~/components/tabs/flow/flow";
-import { Report } from "~/components/tabs/report";
+import { Report } from "~/components/report/report";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Button } from "~/components/ui/button";
 import { Share2 } from "lucide-react";
