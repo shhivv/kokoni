@@ -32,53 +32,6 @@ export default async function Page() {
 
         <Separator />
 
-        {/* Features Section */}
-        <section className="space-y-6">
-          <h2 className="text-center text-2xl font-bold">Key Features</h2>
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-primary">
-                AI-Powered Topic Discovery
-              </h3>
-              <p className="text-muted-foreground">
-                Leverage advanced AI to explore and discover relevant topics
-                based on your interests, helping you build comprehensive
-                research paths.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-primary">
-                Smart Organization
-              </h3>
-              <p className="text-muted-foreground">
-                Automatically organize your research materials, create
-                connections between related topics, and maintain a clear
-                overview of your learning journey.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-primary">
-                Personalized Learning
-              </h3>
-              <p className="text-muted-foreground">
-                Get customized recommendations and learning paths tailored to
-                your interests, knowledge level, and learning style.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-primary">
-                Collaborative Research
-              </h3>
-              <p className="text-muted-foreground">
-                Share your research findings, collaborate with others, and build
-                upon existing knowledge bases within the community.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <Separator />
-
         {/* How It Works Section */}
         <section className="space-y-6">
           <h2 className="text-center text-2xl font-bold">How It Works</h2>
